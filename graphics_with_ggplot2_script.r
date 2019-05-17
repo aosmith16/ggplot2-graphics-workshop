@@ -154,7 +154,7 @@ ggplot(mtcars, aes(x = wt, y = mpg, size = disp) ) +
 	geom_point()
 
 # Adding more layers ----
-# We can put more layers on a graphic by simply adding more geoms
+# We can put more layers on a graphic by adding more geoms
 	# Let's add points on top of the boxplots, 
 	# Mapping colors to be different for the different cylinder categories
 ggplot(mtcars, aes(x = factor(cyl), y = mpg, color = factor(cyl) ) ) +
@@ -242,8 +242,10 @@ ggplot(mtcars, aes(x = numcyl, y = mpg) ) +
 # This involves using the appropriate "scale" function, 
 	# in this case for fill or color,
 	# and changing the values for the colors
-# See http://www.cookbook-r.com/Graphs/Colors_(ggplot2)/ for
-	# some good information about colors and some useful color palettes
+# See http://www.cookbook-r.com/Graphs/Colors_(ggplot2)/ and
+    # http://colorspace.r-forge.r-project.org/articles/hcl_palettes.html
+    # for some good information about colors 
+    # as well as some useful color palettes
 
 # When we change the colors using scale_() functions, 
 	# both the graphic and legend will change
@@ -306,24 +308,25 @@ ggplot(mtcars, aes(x = mpg) ) +
 	# and the density is on the density scale 
 
 # We can change this by setting the y axis 
-	# to one of the special variables 
-	# these geoms create, called ..count.. and ..density..
+	# to one of the computed variables 
+	# these geoms create, called count and density,
+    # which we can use via the stat() function
 # Here is the density on the count scale
-	# We are mapping ..count.. to the y axis, 
+	# We are mapping stat(count) to the y axis, 
 	# so we do this within aes() for the density geom
 ggplot(mtcars, aes(x = mpg) ) +
 	geom_histogram() + 
-	geom_density( aes(y = ..count..) )
+	geom_density( aes(y = stat(count) ) )
 
 # Map fill color to transmission type globally,
     # which fills both the histogram and the density overlay
 ggplot(mtcars, aes(x = mpg, fill = am) ) +
 	geom_histogram() + 
-	geom_density( aes(y = ..count..) )
+	geom_density( aes(y = stat(count) ) )
 
 # Notice that layer order can matter
 ggplot(mtcars, aes(x = mpg, fill = am) ) +
-	geom_density( aes(y = ..count..) ) +
+	geom_density( aes(y = stat(count) ) ) +
 	geom_histogram()
 
 # This graphic might be more useful if we make the 
@@ -332,7 +335,7 @@ ggplot(mtcars, aes(x = mpg, fill = am) ) +
 # alpha is an aesthetic; here we set alpha to a constant, so it is done outside of aes()
 ggplot(mtcars, aes(x = mpg, fill = am) ) +
 	geom_histogram() + 
-	geom_density( aes(y = ..count..), alpha = .5)
+	geom_density( aes(y = stat(count) ), alpha = .5)
 
 # Bar graphs ---
 
@@ -430,18 +433,22 @@ ggplot(mtcars, aes(x = wt, y = mpg, color = numcyl) ) +
     # included below
 
 eggs = structure(list(id = c(198L, 199L, 200L, 201L, 202L, 203L, 204L, 
-                             205L, 206L, 207L, 208L, 209L, 210L, 211L, 212L, 224L, 225L, 226L, 
-                             227L, 228L, 229L, 230L, 231L, 232L, 233L, 234L, 235L, 236L, 237L, 
-                             238L), length = c(23.1, 23.5, 24.1, 23.4, 23.2, 22.5, 21.9, 21.9, 
-                                               25, 24.1, 22.2, 21.1, 22.7, 22, 24.1, 19.8, 22.1, 21.5, 20.9, 
-                                               22, 21, 22.3, 21, 20.3, 20.9, 22, 20, 20.8, 21.2, 21), width = c(16.4, 
-                                                                                                                16.8, 17.1, 16.4, 16.8, 16.6, 16.1, 16.1, 16.9, 15.9, 16.3, 17.2, 
-                                                                                                                16.1, 17, 17.3, 15, 16, 16.2, 15.7, 16.2, 15.5, 16, 15.9, 15.5, 
-                                                                                                                15.9, 16, 15.7, 15.9, 16, 16), species = structure(c(1L, 1L, 
-                                                                                                                                                                     1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 2L, 2L, 2L, 
-                                                                                                                                                                     2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L), .Label = c("Pied Wagtail", 
-                                                                                                                                                                                                                                 "Reed-wren"), class = "factor")), class = "data.frame", row.names = c(NA, 
-                                                                                                                                                                                                                                                                                                       -30L))
+                             205L, 206L, 207L, 208L, 209L, 210L, 211L, 
+                             212L, 224L, 225L, 226L, 227L, 228L, 229L, 
+                             230L, 231L, 232L, 233L, 234L, 235L, 236L, 237L, 238L), 
+                      length = c(23.1, 23.5, 24.1, 23.4, 23.2, 22.5, 21.9, 21.9,
+                                 25, 24.1, 22.2, 21.1, 22.7, 22, 24.1, 19.8, 22.1, 
+                                 21.5, 20.9, 22, 21, 22.3, 21, 20.3, 20.9, 22, 20, 
+                                 20.8, 21.2, 21), 
+                      width = c(16.4, 16.8, 17.1, 16.4, 16.8, 16.6, 16.1, 16.1, 
+                                16.9, 15.9, 16.3, 17.2, 16.1, 17, 17.3, 15, 16, 
+                                16.2, 15.7, 16.2, 15.5, 16, 15.9, 15.5, 
+                                15.9, 16, 15.7, 15.9, 16, 16), 
+                      species = structure(c(1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 
+                                            1L, 1L, 1L, 1L, 1L, 1L, 2L, 2L, 2L, 
+                                            2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L), 
+                                          .Label = c("Pied Wagtail", "Reed-wren"), class = "factor") ), 
+                 class = "data.frame", row.names = c(NA, -30L) )
 head(eggs)
 # Take a look at the structure of "eggs" in the Environment pane
 
@@ -466,8 +473,8 @@ head(eggs)
 	# full advantage of ggplot2
 
 # In this case, we have a wide dataset and want a long dataset
-	# which is easy to change with gather() in package tidyr
-	# or melt() from package reshape2
+	# I will use gather() from package tidyr
+    # to reshape the dataset
 # This will create a column of measurement type with two levels,
 	# length and width,
 	# and a column with the quantitative measurements
@@ -556,6 +563,14 @@ g1 + geom_dotplot(binaxis = "y", stackdir = "center")
 # There are many themes out there, including a whole
     # package called ggthemes
 
+# The default size of the text in a ggplot graphic tends to
+    # be too small for presentations or publications
+# I like to make this larger right off that bat within
+    # the theme_*() function I use by changing
+    # the "base_size" to something larger than
+    # the default of 11
+( g1 = g1 + theme_bw(base_size = 16) )
+
 # I think the gridlines on the y axis are visually useful for boxplots,
 	# but the gridlines along the x axis seem like overkill
 # Let's remove the x axis gridlines
@@ -578,7 +593,7 @@ g1 + theme(panel.grid.major.x = element_blank() )
 ( g1 = g1 + theme(panel.grid.major.x = element_blank(),
                   strip.background = element_blank(),
                   strip.text = element_text(hjust = 0,
-                                            face = "bold", size = 12) ) )
+                                            face = "bold", size = 14) ) )
 
 # At this point I realized I had made an error
 # While I can change a lot of things about the appearance of 
@@ -664,7 +679,8 @@ library(dplyr)
 
 # This is done using mutate(), also from dplyr
 sumdat = mutate(sumdat, 
-			  label = paste0("Mean = ", Mean, " mm", "\n", "SD = ", SD," mm") )
+			  label = paste0("Mean = ", Mean, " mm", "\n", 
+			                 "SD = ", SD," mm") )
 
 # The resulting column looks like this
 sumdat$label
@@ -703,10 +719,10 @@ g1 + geom_text(data = sumdat, aes(label = label, y = yloc) )
 		             color = "grey64", fill = "grey64") +
 		stat_summary(fun.y = mean, geom = "point", shape = 18,
 		             size = 5, color = "grey24") +
-		theme_bw() +
+		theme_bw(base_size = 16) +
 		theme(panel.grid.major.x = element_blank(),
 		      strip.background = element_blank(),
-		      strip.text = element_text(hjust = 0, face = "bold", size = 12) ) +
+		      strip.text = element_text(hjust = 0, face = "bold", size = 14) ) +
 		labs(x = NULL,
 		     y = "Measurement (mm)") +
 		geom_text(data = sumdat, aes(label = label, y = yloc),
@@ -738,8 +754,6 @@ ggsave("final plot 1.png", plot = g1) # using default size
 # At this point I decided I didn't like the size of the dots
 	# and I thought the tick labels on the x-axis should be bigger
 # I edited the plot code with a new dotsize for that geom
-	# and changed the axis tick labels in theme() using
-	# axis.text.x with element_text()
 ( g1 = ggplot(eggs2, aes(x = species, y = measurement) ) +
 		geom_boxplot() +
 		facet_wrap(~type, scales = "free_y") +
@@ -747,11 +761,10 @@ ggsave("final plot 1.png", plot = g1) # using default size
 		             color = "grey64", fill = "grey64", dotsize = .5) +
 		stat_summary(fun.y = mean, geom = "point", shape = 18,
 		             size = 5, color = "grey24") +
-		theme_bw() +
+		theme_bw(base_size = 16) +
 		theme(panel.grid.major.x = element_blank(),
 		      strip.background = element_blank(),
-		      strip.text = element_text(hjust = 0, face = "bold", size = 12),
-		      axis.text.x = element_text(size = 12) ) +
+		      strip.text = element_text(hjust = 0, face = "bold", size = 14) ) +
         labs(x = NULL,
              y = "Measurement (mm)") +
 		geom_text(data = sumdat, aes(label = label, y = yloc),
@@ -774,12 +787,14 @@ ggsave("final plot 1.png", dpi = 600, width = 9, height = 8)
 
 # Let's read those results in
 res = structure(list(Diffmeans = c(-0.27, 0.11, -0.15, -1.27, -1.18
-), Lower.CI = c(-0.63, -0.25, -0.51, -1.63, -1.54), Upper.CI = c(0.09, 
-                                                                 0.47, 0.21, -0.91, -0.82), plantdate = structure(c(2L, 3L, 3L, 
-                                                                                                                    1L, 1L), .Label = c("Feb25", "Jan2", "Jan28"), class = "factor"), 
-stocktype = structure(c(2L, 2L, 1L, 2L, 1L), .Label = c("bare", 
-                                                        "cont"), class = "factor")), class = "data.frame", row.names = c(NA, 
-                                                                                                                         -5L))
+),
+                    Lower.CI = c(-0.63, -0.25, -0.51, -1.63, -1.54), 
+                    Upper.CI = c(0.09, 0.47, 0.21, -0.91, -0.82), 
+                    plantdate = structure(c(2L, 3L, 3L, 1L, 1L), 
+                      .Label = c("Feb25", "Jan2", "Jan28"), class = "factor"), 
+                    stocktype = structure(c(2L, 2L, 1L, 2L, 1L), 
+                      .Label = c("bare","cont"), class = "factor") ),  
+                    class = "data.frame", row.names = c(NA, -5L) )
 res
 # Take a look at the structure
 
@@ -879,9 +894,10 @@ res$plantdate = factor(res$plantdate,
 
 # Now we have the initial graphic to build on
 	# so let's do some work on the panel and axis appearance
-# First, let's change the theme to theme_bw
+# First, let's change the theme to theme_bw()
+    # with a larger base_size
 	# and make the axis labels look nicer
-( g2 = g2 + theme_bw() + 
+( g2 = g2 + theme_bw(base_size = 16) + 
 		labs(x = "Planting Date",
 		     y = "Difference in Growth (cm)") )
 
@@ -956,11 +972,13 @@ g2 + scale_linetype_manual(values = c("solid", "twodash"),
 	# within the plotting area
 # This is yet another time where you might need trial and error to get 
 	# a perfect placement
-# While we're using theme, let's get rid of all the gridlines
-	# although we might consider leaving the ones on the (current) x axis (y axis before flipping)
-( g2 = g2 + theme(legend.position = c(.2, .1),
+# While we're using theme(), let's get rid of the y axis gridlines
+    # and the minor x axis gridlines
+( g2 = g2 + theme(legend.position = c(.25, .1),
                   legend.direction = "horizontal",
-                  panel.grid = element_blank() ) )
+                  panel.grid.major.y = element_blank(),
+                  panel.grid.minor.y = element_blank(),
+                  panel.grid.minor.x = element_blank() ) )
 
 # Last, let's add a label to indicate that the grey rectangle 
 	# is the "zone of no difference"
@@ -975,39 +993,30 @@ g2 + scale_linetype_manual(values = c("solid", "twodash"),
 # Here's what the ggplot code looks like if we built it all together
 ( g2 = ggplot(res, aes(x = plantdate, y = Diffmeans, group = stocktype) ) +
         geom_point(position = position_dodge(width = .75) ) +
-		geom_errorbar( aes(ymax = Upper.CI, ymin = Lower.CI,
-		                   linetype = stocktype,
-		                   width = c(.2, .4, .4, .4, .4) ),
-		               position = position_dodge(width = .75) ) +
-		theme_bw() +
+        geom_errorbar( aes(ymax = Upper.CI, ymin = Lower.CI,
+                           linetype = stocktype,
+                           width = c(.2, .4, .4, .4, .4) ),
+                       position = position_dodge(width = .75) ) +
+        theme_bw() +
         labs(x = "Planting Date",
              y = "Difference in Growth (cm)") +
-		geom_rect(xmin = -Inf, xmax = Inf, ymin = -.25, ymax = .25,
-		          fill = "grey54", alpha = .05) +
-		scale_y_continuous(breaks = seq(-1.5, .5, by = .25) ) +
-		coord_flip() +
-		scale_linetype_manual(values = c("solid", "twodash"),
-		                      name = element_blank(),
-		                      labels = c("Bare root", "Container"),
-		                      guide = guide_legend(reverse = TRUE) ) +
-		theme(legend.position = c(.2, .1),
-		      legend.direction = "horizontal",
-		      panel.grid = element_blank() ) +
-		annotate(geom = "text", x = .5, y = 0,
-		         label = "Zone of no difference", size = 3) )
+        geom_rect(xmin = -Inf, xmax = Inf, ymin = -.25, ymax = .25,
+                  fill = "grey54", alpha = .05) +
+        scale_y_continuous(breaks = seq(-1.5, .5, by = .25) ) +
+        coord_flip() +
+        scale_linetype_manual(values = c("solid", "twodash"),
+                              name = element_blank(),
+                              labels = c("Bare root", "Container"),
+                              guide = guide_legend(reverse = TRUE) ) +
+        theme(legend.position = c(.25, .1),
+              legend.direction = "horizontal",
+              panel.grid.major.y = element_blank(),
+              panel.grid.minor.y = element_blank(),
+              panel.grid.minor.x = element_blank() ) +
+        annotate(geom = "text", x = .5, y = 0,
+                 label = "Zone of no difference", size = 3) )
 
 # This now matches the final graphic, and we could save it as before
 ggsave("final plot 2.pdf", width = 8, height = 7)
 
 # end of workshop ----
-
-
-
-
-
-
-
-ggsave("Workshop final graphic 1.pdf", width = 9, height = 8, plot = g1)
-ggsave("Workshop final graphic 2.pdf", width = 8, height = 7, plot = g2)
-
-ggsave("Workshop_final_graphic_1.png", width = 9, height = 8, plot = g1, dpi = 600)

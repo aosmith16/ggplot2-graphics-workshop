@@ -6,6 +6,7 @@ output:
   toc: true
   toc_depth: 4
   fig_caption: false
+urlcolor: blue
 ---
 ```{r setup, include = FALSE, message = FALSE}
 options(width = 100)
@@ -25,7 +26,7 @@ There are many resources for **ggplot2** help online.  Once you get started maki
 
 - For nice coverage of some of the basics, check out the Cookbook for R website: http://www.cookbook-r.com/Graphs.
 
-- All the functions, complete with examples, are on the **ggplot2** website: http://ggplot2.tidyverse.org/reference/. 
+- All the functions, complete with examples, are on the **ggplot2** website: http://ggplot2.tidyverse.org/reference/.
 
 - Folks on Stack Overflow answer questions about **ggplot2** code pretty much daily.  You can look at (and search in) all the questions tagged with the [ggplot2] tag: http://stackoverflow.com/questions/tagged/ggplot2. 
 
@@ -132,7 +133,7 @@ Assigning a variable from the dataset to an aesthetic is always done within the 
 
 Let's make our scatterplot again, but this time we will map a different color to points for cars in different cylinder categories.  We'll do this by mapping the `color` aesthetic to the `cyl` variable.  Again we will need to use `factor(cyl)` to indicate that `cyl` should be considered categorical instead of continuous.
 
-One of the convenient things about **ggplot2** is that we when map aesthetics to variables we get legends automatically.  When making quick exploratory graphics I always use the default colors that **ggplot2** chooses.  Later today we'll see that we can change these defaults by using some of the `scale` functions.
+One of the convenient things about **ggplot2** is that we when map aesthetics to variables we get legends automatically.  When making quick exploratory graphics I always use the default colors that **ggplot2** chooses.  Later today we'll see that we can change these defaults by using some of the `scale_*()` functions.
 
 ```{r}
 ggplot(mtcars, aes(x = wt, y = mpg, color = factor(cyl) ) ) +
@@ -145,7 +146,7 @@ In the plots we are making today we will be only mapping categorical variables t
 
 Note that some aesthetics can never be used with continuous variables.  For example, `shape` and `linetype` can only be used with categorical variables as those aesthetics don't have a continuous nature.  You would get an error message if you attempted to use continuous variables with either of those.
 
-To see how aesthetic mapping with a continuous variable works, we'll make a bubble plot by mapping the `size` aesthetic to the continuous variable `disp` in our scatterplot.  As always, the aesthetic mapping takes place inside `aes`.
+To see how aesthetic mapping with a continuous variable works, we'll make a bubble plot by mapping the `size` aesthetic to the continuous variable `disp` in our scatterplot.  As always, the aesthetic mapping takes place inside `aes()`.
 
 ```{r}
 ggplot(mtcars, aes(x = wt, y = mpg, size = disp) ) +
@@ -156,7 +157,7 @@ ggplot(mtcars, aes(x = wt, y = mpg, size = disp) ) +
 
 Not only can we add additional aesthetics, we can also add additional geoms to a plot by adding more layers.  This gives us a lot of freedom to make really informative graphics.  
 
-Let's add the data points on top of the boxplots we made by adding a `geom_point` layer.  In addition, let's map `color` to the number of cylinders.  We put the aesthetic mapping in `ggplot`, which causes both the boxplots and points to be colored by `cyl`.  This is called mapping an aesthetic *globally*, as it affects all layers in the plot.
+Let's add the data points on top of the boxplots we made by adding a `geom_point()` layer.  In addition, let's map `color` to the number of cylinders.  We put the aesthetic mapping in `ggplot()`, which causes both the boxplots and points to be colored by `cyl`.  This is called mapping an aesthetic *globally*, as it affects all layers in the plot.
 
 Notice that when we use `color` for plots such as boxplots, the `color` changes the outline color and not the color of the inside of the box.  We would use the `fill` aesthetic for changing the color of the inside of the boxes.
 
@@ -168,11 +169,11 @@ ggplot(mtcars, aes(x= factor(cyl), y = mpg, color = factor(cyl) ) ) +
 
 ### Setting aesthetics to constants within layers
 
-We can add arguments to individual geom layers.  In the next graphic, we will map the colors with `cyl` again for the boxplots, but we will *set* the color of the points to purple.  We can do this by adding the `color` argument to `geom_point`.  When we add an aesthetic to a geom that we've already defined within `ggplot`, the global `ggplot` aesthetic gets overridden *for that geom only*.
+We can add arguments to individual geom layers.  In the next graphic, we will map the colors with `cyl` again for the boxplots, but we will *set* the color of the points to purple.  We can do this by adding the `color` argument to `geom_point()`.  When we add an aesthetic to a geom that we've already defined within `ggplot()`, the global `ggplot()` aesthetic gets overridden *for that geom only*.
 
-It is important to recognize that the argument within `geom_point` sets the aesthetic to a constant value (purple) instead of mapping to a variable.  This means that we use `color` outside of the `aes` function for the first time.  When we set aesthetics to constants the legends are not affected.  
+It is important to recognize that the argument within `geom_point()` sets the aesthetic to a constant value (purple) instead of mapping to a variable.  This means that we use `color` outside of the `aes()` function for the first time.  When we set aesthetics to constants the legends are not affected.  
 
-Knowing when to define aesthetics like `color` inside or outside the `aes` function can be confusing when you first start working with **ggplot2**.  Generally, if you are mapping an aesthetic to a variable from your dataset you do it inside `aes` but if you are setting an aesthetic to a constant value you do it outside `aes`.
+Knowing when to define aesthetics like `color` inside or outside the `aes()` function can be confusing when you first start working with **ggplot2**.  Generally speaking, if you are mapping an aesthetic to a variable from your dataset you do it inside `aes()` but if you are setting an aesthetic to a constant value you do it outside `aes()`.
 
 ```{r}
 ggplot(mtcars, aes(x = factor(cyl), y = mpg, color = factor(cyl) ) ) +
@@ -182,11 +183,13 @@ ggplot(mtcars, aes(x = factor(cyl), y = mpg, color = factor(cyl) ) ) +
 
 ### Mapping aesthetics separately for different geoms
 
-So far we've been using aesthetic mapping only within `ggplot`.  We can map aesthetics to variables within specific geoms, as well.  
+So far we've been using aesthetic mapping only within `ggplot()`.  We can map aesthetics to variables within specific geoms, as well.  
 
-As mentioned earlier, when we map aesthetics in `ggplot` they are *global*, so those aesthetics mappings are used in all the layers throughout the graphic.  We just saw that we can override global aesthetics within a geom if we need to.  There are times when making complicated graphics that we might not want to map aesthetics globally because we'd have to override them in too many subsequent layers.  In this case, we'd do the aesthetic mapping within specific geom layers instead.  
+As I mentioned earlier, when we map aesthetics in `ggplot()` they are *global*, so those aesthetics mappings are used in all the layers throughout the graphic.  We just saw that we can override global aesthetics within a geom if we need to.  
 
-In the next graph we will map the fill color for the boxplots to `cyl` and the color of the points to `am` (transmission type).  We don't want to color the boxplot outline by `am`, though, so we map the aesthetics separately within the geom layers rather than globally in `ggplot`.  Notice we do the mapping within the `aes` function still, but we did it within each layer instead of in `ggplot`. 
+There are times when making complicated graphics that we might not want to map aesthetics globally because we'd have to override them in too many subsequent layers.  In this case, we'd do the aesthetic mapping within specific geom layers instead.  
+
+In the next graph we will map the fill color for the boxplots to `cyl` and the color of the points to `am` (transmission type).  We don't want to color the boxplot outline by `am`, though, so we map the aesthetics separately within the geom layers rather than globally in `ggplot()`.  Notice we do the mapping within the `aes()` function still, but we did it within each geom layer instead of in `ggplot()`. 
 
 In this example, `x` and `y` are mapped globally while `fill` is mapped to `cyl` only for the boxplot layer and `color` is mapped to `am` only for the points layer.
 
@@ -202,7 +205,7 @@ ggplot(mtcars, aes(x = factor(cyl), y = mpg) ) +
 
 This is a good place for us to talk a bit about the relationship between the dataset and the graphic.  In the philosophy behind **ggplot2**, the dataset and the graphic go hand in hand.  Making changes to the dataset is often the most straightforward way to make changes to the resulting graphic.  The answer to the common help forum question "How do I change the appearance of xxx in **ggplot2**?" is very often "Make changes to your dataset."  
 
-In the example dataset we've been using, the two categorical variables we've used are considered numeric in the `mtcars` dataset so we've had to define them as factors every time we use them.  In addition, the levels of the `am` variable are not useful for discerning what color represents an automatic vs manual transmission and so that legend is particularly uninformative.  
+In the example dataset we've been using, the two categorical variables we've used are considered numeric in the `mtcars` dataset so we've had to define them as factors every time we use them.  In addition, the levels of the `am` variable are not useful for discerning which color represents an automatic vs manual transmission and so that legend is particularly uninformative.  
 
 Let's take a moment to go back to the `mtcars` dataset to define `cyl` and `am` as factors and make informative names for the levels of `am` (remember `0` in `am` stands for an automatic transmission).  We'll call the new cylinder variable `numcyl`.
 
@@ -223,33 +226,33 @@ ggplot(mtcars, aes(x = numcyl, y = mpg) ) +
 
 ### Choosing colors for `color` and `fill`
 
-We won't be working with colors when we switch from exploratory graphics to creating polished graphics, so I thought I'd give a quick example here of changing the color scheme away from the default colors.  You can change the *values* for any aesthetic by using the appropriate *scale* function.  For example, to change the `fill` and `color` colors away from the defaults, we can use `scale_fill_manual` and `scale_color_manual`, respectively.  
+We won't be working with colors when we switch from exploratory graphics to creating polished graphics, so I thought I'd give an example here of changing the color scheme away from the default colors.  You can change the *values* for any aesthetic by using the appropriate *scale* function.  For example, to change the `fill` and `color` colors away from the defaults, we can use `scale_fill_manual()` and `scale_color_manual()`, respectively.  
 
 We change the default colors to the desired colors using the `values` argument.  New colors are assigned in the order of the factor variable levels that we mapped the aesthetic to.  The levels of the `numcyl` variable are ordered `4`, `6`, `8` and the levels of the `am` variable are `Auto`, `Manual`. See the `limits` argument for changing the order of the factor levels within the scale functions (we will not cover this today). 
 
-There is some nice information about available colors and color palettes at the Cookbook to R site, http://www.cookbook-r.com/Graphs/Colors_(ggplot2)/.
+There is some nice information about available colors and color palettes at the Cookbook to R site, http://www.cookbook-r.com/Graphs/Colors_(ggplot2)/ and package **colorspace** overview, http://colorspace.r-forge.r-project.org/articles/hcl_palettes.html.
 
-Let's change the fill colors to light green, sky blue, and pink using color names, and the point colors to a green and an orange using hexadecimal string names I pulled off the link I gave above.
+Let's change the fill colors to light green, sky blue, and pink using color names, and the point colors to a green and an orange using hexadecimal string names I pulled off the Cookbook to R link I gave above.
 
-Make sure you use the correct `scale` for the aesthetic you are using in your graphic.  If you map a variable to `fill`, don't expect `scale_color_manual` to change the `fill` colors.
+Make sure you use the correct `scale_*()` function for the aesthetic you are using in your graphic.  If you map a variable to `fill`, `scale_color_manual()` won't change the `fill` colors.
 
 ```{r}
 ggplot(mtcars, aes(x = numcyl, y = mpg) ) +
 	geom_boxplot(aes(fill = numcyl) ) +
-	geom_point(aes(color = am)) +
+	geom_point(aes(color = am) ) +
 	scale_fill_manual(values = c("light green", "sky blue", "pink") ) +
 	scale_color_manual(values = c("#009E73", "#E69F00") )
 ```
 
 ### Dot plot example
 
-There are many, many other geoms available in **ggplot2**, far too many to cover today.  We'll hit a few more before moving on.  
+There are many, many other geoms available in **ggplot2**, far too many to cover today.  Let's talk about a few of the ones we commonly use in data exploration before moving on.  
 
-One useful graphic not everyone has seen before is a dot plot.  Dot plots are essentially a type of histogram made using dots.  This is an alternative way to show the raw data values along with a boxplot (which shows summary statistics).  
+One useful graphic not everyone has seen before is a dot plot.  Dot plots are essentially a type of histogram made using dots.  This is an alternative way to show the raw data values along with a boxplot (which shows summary statistics).
 
-Let's put a dot plot on top of our boxplot using `geom_dotplot`.  Here we need to bin along the y axis, so this will look like a histogram turned on its side.  You always get a message about the `binwidth` for dot plots and histograms.  This is just information and does not indicate an error.  
+Let's put a dot plot on top of our boxplot using `geom_dotplot()`.  Here we need to bin along the y axis, so this will look like a histogram turned on its side.  You always get a message about the `binwidth` for dot plots and histograms.  This is information about the plot, and does not indicate an error.  
 
-We'll set the dot fill color to purple, which is done outside of `aes` as it involves setting an aesthetic to a constant value.  In dot plots, `color` changes the outline color of the dots and `fill` changes the inside color.
+We'll set the dot fill color to purple, which is done outside of `aes()` since this involves setting an aesthetic to a constant value.  In dot plots, `color` changes the outline color of the dots and `fill` changes the inside color.
 
 ```{r}
 ggplot(mtcars, aes(x = numcyl, y = mpg) ) +
@@ -261,7 +264,7 @@ ggplot(mtcars, aes(x = numcyl, y = mpg) ) +
 
 Histograms and density plots are both commonly used when making exploratory graphics of single variables.  You can think of a density plot of a sort of smoothed histogram (although this is not the formal definition).  
 
-We only need to define the x axis for these plots, as the y axis is either a count or a density and **ggplot2** calculates those for us.  Let's make a histogram and a density plot of `mpg`.
+We only need to define the x axis for these plots, as the y axis is either a count or a density and **ggplot2** calculates those for us.  Let's make a histogram and then a density plot of `mpg`.
 
 ```{r, message = FALSE}
 ggplot(mtcars, aes(x = mpg) ) +
@@ -271,7 +274,7 @@ ggplot(mtcars, aes(x = mpg) ) +
 	geom_density()
 ```
 
-We can also make a histogram with a density overlay.  Be careful, though.  Look at the following graphic.
+A next step might be to make a histogram with a density overlay.  We need to be careful with this, though.  Look at what happens when I try to add `geom_density()` on top of `geom_histogram()`; we can barely see the density line.
 
 ```{r, message = FALSE}
 ggplot(mtcars, aes(x = mpg) ) +
@@ -279,44 +282,52 @@ ggplot(mtcars, aes(x = mpg) ) +
 	geom_density()
 ```
 
-By default, histograms and density plots are on different scales.  If we want both on the same plot we'd need to get both layers on the same scale, showing either counts or densities.  There are special variables that these two geoms create, named `..count..` and `..density..`, that we can use to do this.  We can map our `y` variable to one of these special variables.  As this involves aesthetic mapping, we have to do this inside `aes`.  Don't forget those two periods before and after the words or you will get an error message.  
+By default, histograms and density plots are on different scales.  If we want both on the same plot we'd need to get both layers on the same scale, showing either counts or densities.  The `histogram` and `density` geoms compute count and density variables, among others, that we can use for this.  The variables computed by each geom are listed in the "Computed variables" section of the documentation.  Follow [this link](https://ggplot2.tidyverse.org/reference/geom_histogram.html#computed-variables) for the computed variables from `geom_histogram()`.
+
+We can map our `y` variable to one of these special variables via `stat()`.  As this involves aesthetic mapping, we have to do this inside `aes()`.  
 
 Let's put the density curve on the scale of counts and try the plot again.
 
 ```{r, message = FALSE}
 ggplot(mtcars, aes(x = mpg) ) +
 	geom_histogram() + 
-	geom_density(aes(y = ..count..) )
+	geom_density(aes(y = stat(count) ) )
 ```
 
 ### Layer order
 
 The order we add the geom layers matters.  Look what happens when we map `fill` to `am` for all the layers and change the order in which we add the histogram and density layers.  The layer added last is always on top.
 
+Here the density layer comes last so it is on top of the histogram.
+
 ```{r, message = FALSE}
 ggplot(mtcars, aes(x = mpg, fill = am) ) +
 	geom_histogram() + 
-	geom_density(aes(y = ..count..) )
+	geom_density(aes(y = stat(count) ) )
+```
 
+But if we use the histogram layer last the histogram is plotted on top of the density plot.  
+
+```{r, message = FALSE}
 # Change the order of the geom layers
 ggplot(mtcars, aes(x = mpg, fill = am) ) +
-	geom_density(aes(y = ..count..)) +
+	geom_density(aes(y = stat(count) ) ) +
 	geom_histogram()
 ```
 
-These filled graphics aren't particularly nice looking.  The graphics become slightly more useful if we allow the color of the fill to be more transparent in the density layer.  We control transparency using the `alpha` aesthetic.  We can set `alpha` to be between 0 and 1, with 0 being completely transparent and 1 completely opaque.  
+These filled graphics aren't a little difficult to read.  The graphic become slightly more useful if we allow the color of the fill to be more transparent in the density layer.  We control transparency using the `alpha` aesthetic.  We can set `alpha` to be between 0 and 1, with 0 being completely transparent and 1 completely opaque.  
 
-We will set `alpha` to a constant inside `geom_density`.  Because we are not aesthetic mapping, we will do this outside of `aes`.  You can map the `alpha` aesthetic to variables, although we won't do this today.
+We will set `alpha` to a constant inside `geom_density()`.  Because we are not aesthetic mapping, we will do this outside of `aes()`.  You can map the `alpha` aesthetic to variables, although we won't do this today.
 
 ```{r, message = FALSE}
 ggplot(mtcars, aes(x = mpg, fill = am) ) +
 	geom_histogram() + 
-	geom_density(aes(y = ..count..), alpha = .5)
+	geom_density(aes(y = stat(count) ), alpha = .5)
 ```
 
 ### Bar graphs
 
-Bar graphs are closely related to histograms, but involve graphing counts of a categorical variable instead of binning a continuous variable.  You can map values other than counts to the bars using the `y` aesthetic, but `geom_bar` defaults to counts.  See `geom_col` for mapping `y` to a variable.
+Bar graphs are closely related to histograms, but involve graphing counts of a categorical variable instead of binning a continuous variable.  You can map values other than counts to the bars using the `y` aesthetic, but `geom_bar()` defaults to counts.  See `geom_col()` for a bar chart but `y` to a variable instead of graphing the count per group.
 
 ```{r}
 ggplot(mtcars, aes(x = numcyl) ) +
@@ -325,7 +336,11 @@ ggplot(mtcars, aes(x = numcyl) ) +
 
 ### Facets
 
-Sometimes we want to create plots for different groups in different panes within the same graphic.  In **ggplot2** lingo this is called *faceting*.  There are two faceting functions, `facet_wrap` and `facet_grid`.  They actually can be quite different, so if you're doing faceting you should look at the help page examples for each.  Today we're working with `facet_wrap`.
+Sometimes we want to create plots for different groups in different panes within the same graphic.  In **ggplot2** lingo this is called *faceting*.  There are two faceting functions, `facet_wrap()` and `facet_grid()`.  They actually can be quite different, so if you're doing faceting you should review the help page examples for each.  
+
+Today I'll demonstrate a basic plot using `facet_wrap()`.  While there's a ton you can do with this function, I won't get into any of the bells and whistles here.  
+
+Inside `facet_wrap()` we list the variable that contains the groups that we want to plot as separate panels after the tilde, `~`.
 
 Here is the `mpg` vs `wt` scatterplot, with a separate plot for each level of `numcyl`.
 
@@ -345,11 +360,11 @@ ggplot(mtcars, aes(x = wt, y = mpg) ) +
 
 ### Adding layers using summary statistics
 
-The function `stat_summary` can be used to add layers based on simple summary statistics.  To see how this works, let's add mean `mpg` by group to our boxplot/dot plot graphic as a large red square.  
+The function `stat_summary()` can be used to add layers based on simple summary statistics.  To see how this works, let's add mean `mpg` by group to our boxplot/dot plot graphic as a large red square.  
 
-We have to define which axis we want the summary statistics for (here `mpg` is on the y axis, so we use `fun.y`) and which geom we want to use to plot the summary statistics.  In this case we'll use the `point` geom to add the means as points.  Notice that all aesthetics we use in `stat_summary` are set to constants and not mapped to variables so we define them outside of `aes`.
+We have to define which axis we want the summary statistics for (here `mpg` is on the y axis, so we use `fun.y`) and which geom we want to use to plot the summary statistics.  In this case we'll use the `point` geom to add the means as points.  Notice that all aesthetics we use in `stat_summary()` are set to constants and not mapped to variables so we define them outside of `aes()`.
 
-Summary information can also be added to a graphic by creating a summary dataset and then using that summary dataset when adding additional layers to a graphic.  We will see this approach later in the workshop.
+Summary information can also be added to a graphic by creating a summary dataset and then using that summary dataset when adding additional layers to a graphic.  I find this is often easier to do than to try to figure out how to do complicated summaries with `stat_summary()`.  We will see this approach later in the workshop.
 
 I generally can't remember which numbers correspond to which shapes in R.  There is a nice cheat sheet on Cookbook for R: http://www.cookbook-r.com/Graphs/Shapes_and_line_types/. Note that shapes 21 through 25 are *fillable*, meaning you can color the inside with `fill` and the outline with `color`.
 
@@ -362,9 +377,9 @@ ggplot(mtcars, aes(x = numcyl, y = mpg) ) +
 
 ### Adding regression lines
 
-Along the same lines as summary statistics, it is easy to add regression lines to graphics using `geom_smooth` or `stat_smooth`.  Let's add linear regression lines to a scatter plot using `geom_smooth`.  We have to set the `method` to `"lm"` to get regression lines.  The default method of `geom_smooth` is a `"loess"` line, which can also be useful when exploring your data.  
+Along the same lines as summary statistics, it is straightforward to add regression lines to graphics using `geom_smooth()` or `stat_smooth()`.  Let's add linear regression lines to a scatter plot using `geom_smooth()`.  We have to set the `method` to `"lm"` to get regression lines.  The default method of `geom_smooth()` is a `"loess"` line, which can also be useful when exploring your data.  
 
-By default `geom_smooth` calculates a confidence envelope around the line, which isn't usually reasonable when working on exploratory graphics.
+By default `geom_smooth()` calculates a confidence envelope around the line, which isn't usually reasonable when working on exploratory graphics.
 
 ```{r}
 ggplot(mtcars, aes(x = wt, y = mpg) ) +
@@ -372,7 +387,9 @@ ggplot(mtcars, aes(x = wt, y = mpg) ) +
 	geom_smooth(method = "lm")
 ```
 
-We can fit regression lines separately for each group by mapping an aesthetic such as `color` to a categorical variable.  We'll map `color` to `numcyl` to get a separate regression line for each cylinder category.  Let's remove the confidence envelope in the next plot by using the argument `se = FALSE`.  We could always add it back after we checked our assumptions and knew it was appropriate.
+We can fit regression lines separately for each group by mapping an aesthetic such as `color` to a categorical variable.  We'll map `color` to `numcyl` to get a separate regression line for each cylinder category.  
+
+Let's remove the confidence envelope in the next plot by using the argument `se = FALSE`.  We could always add it back after we checked our assumptions and knew it was appropriate.
 
 ```{r}
 ggplot(mtcars, aes(x = wt, y = mpg, color = numcyl) ) +
@@ -398,31 +415,66 @@ Here is the dataset.
 
 ```{r}
 eggs = structure(list(id = c(198L, 199L, 200L, 201L, 202L, 203L, 204L, 
-205L, 206L, 207L, 208L, 209L, 210L, 211L, 212L, 224L, 225L, 226L, 
-227L, 228L, 229L, 230L, 231L, 232L, 233L, 234L, 235L, 236L, 237L, 
-238L), length = c(23.1, 23.5, 24.1, 23.4, 23.2, 22.5, 21.9, 21.9, 
-25, 24.1, 22.2, 21.1, 22.7, 22, 24.1, 19.8, 22.1, 21.5, 20.9, 
-22, 21, 22.3, 21, 20.3, 20.9, 22, 20, 20.8, 21.2, 21), width = c(16.4, 
-16.8, 17.1, 16.4, 16.8, 16.6, 16.1, 16.1, 16.9, 15.9, 16.3, 17.2, 
-16.1, 17, 17.3, 15, 16, 16.2, 15.7, 16.2, 15.5, 16, 15.9, 15.5, 
-15.9, 16, 15.7, 15.9, 16, 16), species = structure(c(1L, 1L, 
-1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 2L, 2L, 2L, 
-2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L), .Label = c("Pied Wagtail", 
-"Reed-wren"), class = "factor")), class = "data.frame", row.names = c(NA, 
--30L))
+                             205L, 206L, 207L, 208L, 209L, 210L, 211L, 
+                             212L, 224L, 225L, 226L, 227L, 228L, 229L, 
+                             230L, 231L, 232L, 233L, 234L, 235L, 236L, 237L, 238L), 
+                      length = c(23.1, 23.5, 24.1, 23.4, 23.2, 22.5, 21.9, 21.9,
+                                 25, 24.1, 22.2, 21.1, 22.7, 22, 24.1, 19.8, 22.1, 
+                                 21.5, 20.9, 22, 21, 22.3, 21, 20.3, 20.9, 22, 20, 
+                                 20.8, 21.2, 21), 
+                      width = c(16.4, 16.8, 17.1, 16.4, 16.8, 16.6, 16.1, 16.1, 
+                                16.9, 15.9, 16.3, 17.2, 16.1, 17, 17.3, 15, 16, 
+                                16.2, 15.7, 16.2, 15.5, 16, 15.9, 15.5, 
+                                15.9, 16, 15.7, 15.9, 16, 16), 
+                      species = structure(c(1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 
+                                            1L, 1L, 1L, 1L, 1L, 1L, 2L, 2L, 2L, 
+                                            2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L), 
+                                          .Label = c("Pied Wagtail", "Reed-wren"), class = "factor") ), 
+                 class = "data.frame", row.names = c(NA, -30L) )
 head(eggs)
 str(eggs)
 ```
 
-I provided you the final graphic we are working towards in `Workshop final graphic 1.pdf`, which is printed below so you can see what we are working towards.  
+You can see the final graphic we are working towards below.  
 
-![](Workshop_final_graphic_1.png)
+```{r finalgraph1, message = FALSE, warning = FALSE, fig.height = 8, fig.width = 9}
+library(tidyr)
+library(dplyr)
+eggs2 = gather(eggs, key = type, value = measurement,
+			length, width, factor_key = TRUE)
+levels(eggs2$type) = c("Egg length", "Egg width")
+sumdat = eggs2 %>% 
+        group_by(type, species) %>%
+        summarise(Mean = round(mean(measurement), 1),
+                  SD = round(sd(measurement), 1) )
+loc = eggs2 %>% 
+      group_by(type) %>%
+      summarise(yloc = min(measurement) - .5)
+sumdat = sumdat %>%
+    inner_join(loc) %>%
+    mutate(label = paste0("Mean=", Mean, " mm", "\n", "SD=", SD," mm") )
+ggplot(eggs2, aes(x = species, y = measurement) ) +
+ 	geom_boxplot() + 
+	facet_wrap(~type, scales = "free_y") +
+	geom_dotplot(binaxis = "y", stackdir = "center",
+	             color = "grey64", fill = "grey64", dotsize = .5) +
+	stat_summary(fun.y = mean, geom = "point", shape = 18,
+	             size = 5, color = "grey24") +
+	theme_bw(base_size = 16) + 
+	theme(panel.grid.major.x = element_blank(),
+	      strip.background = element_blank(),
+	      strip.text = element_text(hjust = 0, face = "bold", size = 14) ) +
+ 	labs(x = NULL,
+ 	     y = "Measurement (mm)") +
+	geom_text(data = sumdat, aes(label = label, y = yloc),
+	          lineheight = .9, vjust = .3, size = 4)
+```
 
 #### Reshaping a dataset prior to graphing
 
-You can see that I used faceting to put measurement type (`length` or `width`) in separate panes.  However, the current dataset doesn't have a variable for us to facet with because `length` and `width` are in separate columns.  We will need to reshape this wide dataset into long format using `melt` from package **reshape2** or `gather` from package **tidyr**.  I've decided to show you the **tidyr** version today.
+You can see that I used faceting to put measurement type (`length` or `width`) in separate panes.  However, the current dataset doesn't have a variable for us to facet with because `length` and `width` are in separate columns.  We will need to reshape this wide dataset into long format.  I will use `gather()` from package **tidyr** for this today.
 
-Using `gather`, we will create a new categorical variable representing measurement type in one column and all the quantitative measurement values in another.  We define the names of the new columns we'll are making using the `key` and `value` arguments, and then list which columns we want to take and put into a single column.
+Using `gather()`, we will create a new categorical variable representing measurement type in one column and all the quantitative measurement values in another.  We define the names of the new columns we'll are making using the `key` and `value` arguments, and then list which columns we want to take and put into a single column.
 
 Reshaping is often needed in order to take full advantage of **ggplot2**.  Being comfortable with data manipulation in R is one key to success for creating **ggplot2** graphics.  
 
@@ -438,7 +490,7 @@ str(eggs2)
 
 I'm going to change the style of how I create the polished graphics for teaching purposes.  You will likely see this style on help forums or in help documents, although I personally rarely use this style in my own graphics code.  
 
-This is how it will go:  First I will create and name a basic graphic by defining the dataset and the x and y axes in `ggplot` and adding a geom layer.  This first graphical object will be named `g1`.  Then we will start to add layers to `g1`, renaming the graphic as `g1` each time we add a layer.  This will allow us to see how the graphic changes layer by layer.
+This is how it will go:  First I will create and name a basic graphic by defining the dataset and the x and y axes in `ggplot()` and adding a geom layer.  This first graphical object will be named `g1`.  Then we will start to add layers to `g1`, renaming the graphic as `g1` each time we add a layer.  This will allow us to see how the graphic changes layer by layer.
 
 We will start with a simple boxplot, putting `species` on the x axis and `measurement` on the y axis.  The extra pair of parentheses prints the graphic to the plotting pane so we can see the plot change as we go.
 
@@ -479,13 +531,13 @@ Boxplots show medians but not means.  It can be nice to add the means, especiall
                          shape = 18, size = 5, color = "grey24") )
 ```
 
-#### Changing plot appearance with `theme`
+#### Changing plot appearance with `theme()`
 
 So far this is pretty much a review of things we did in the first part of the workshop.  Let's change our focus to the overall appearance of the graphic, particularly the appearance of the panels and axes.
 
-The default appearance of **ggplot2** graphics is called `theme_gray`.  The default gray background of **ggplot2** can be nice for seeing differences in colors, but is not as useful if printing in black and white.  If I'm going to include something in a printed document, I often use the built-in theme `theme_bw` to change the overall appearance of the graphic.  This theme is called "theme black-and-white".  You also might be interested in the built-in theme `theme_minimal`, which is a standard format in some fields.  There are many themes out there - check out package *ggthemes* for more options. 
+The default appearance of **ggplot2** graphics is called `theme_gray()`.  The default gray background of **ggplot2** can be nice for seeing differences in colors, but is not as useful if printing in black and white.  If I'm going to include something in a printed document, I often use the built-in theme `theme_bw` to change the overall appearance of the graphic.  This theme is called "theme black-and-white".  You also might be interested in the built-in theme `theme_minimal`, which is a standard format in some fields.  There are many themes out there - check out package **ggthemes** for more options. 
 
-While I could change all elements of the panel manually, I find `theme_bw` gives a nice starting point for further changes.
+While I could change all elements of the panel manually, I find `theme_bw()` gives a nice starting point for further changes.
 
 ```{r, message = FALSE}
 ( g1 = g1 + theme_bw() )
@@ -493,21 +545,27 @@ While I could change all elements of the panel manually, I find `theme_bw` gives
 
 Although the result isn't actually black and white, as the grid lines and axis tick labels are still grey, you can see this changes the panel background to white.  
 
-Having grid lines along the y axis is useful for reading the graph, but grid lines along a categorical axis like the x axis seems unnecessary.  Control of panel elements, including the removal of grid lines, can be done in `theme`.  See the help page for `theme` via `?theme` for the many, many elements of the graphic that you can change.
+The default text size in **ggplot2** themes is often too small for graphs that will be in a presentation or publication.  I can make all these bigger by changing the `base_size` in the overall `theme_*()` function.  I have used `18` for presentations before; here I'll use `16` (the default is `11`)
 
-Because we only want to remove the grid lines on the x axis we will use the `panel.grid.major.x` argument set to `element_blank` within `theme`.
+```{r, message = FALSE}
+( g1 = g1 + theme_bw(base_size = 16) )
+```
+
+Having grid lines along the y axis is useful for reading the graph, but grid lines along a categorical axis like the x axis seems unnecessary.  Control of panel elements, including the removal of grid lines, can be done in `theme()`.  See the help page for `theme()` via `?theme` for the many, many elements of the graphic that you can change.
+
+Because we only want to remove the grid lines on the x axis we will use the `panel.grid.major.x` argument set to `element_blank()` within `theme()`.
 
 ```{r, message = FALSE}
 g1 + theme(panel.grid.major.x = element_blank() )
 ```
 
-While we're working in `theme`, let's make changes to the strips of the facets.  We can change the color of the background (or remove it all together by setting it to `element_blank`) with `strip.background` and adjust the text placement and size with `strip.text`.  Note we cannot actually change the labels in `strip.text`, only adjust how the text element is displayed.
+While we're working in `theme()`, let's make changes to the strips of the facets.  We can change the color of the background (or remove it all together by setting it to `element_blank()`) with `strip.background` and adjust the text placement and size with `strip.text`.  Note we cannot actually change the labels in `strip.text`, only adjust how the text element is displayed.
 
 ```{r, message = FALSE}
 ( g1 = g1 + theme(panel.grid.major.x = element_blank(),
                   strip.background = element_blank(),
                   strip.text = element_text(hjust = 0, 
-                                            face = "bold", size = 12) ) )
+                                            face = "bold", size = 14) ) )
 ```
 
 #### Changing facet labels
@@ -543,9 +601,9 @@ The last appearance change we really need is the axis labels.  We can edit the a
 
 I could have stopped here and had a perfectly nice graphic.  However, I like adding additional information to graphics so I decided to walk you through the process I went through to add summary statistics as text to this graphic.  
 
-To do this, we first need to calculate the summary statistics and figure out where to place them along the x and y axes.  Then we'll add the information the graphic as *labels* with `geom_text`.  You can see the final result in `Workshop final graphic 1.pdf`.  The other way to do this, which I use more often, is to add tables to graphical objects using the **gridExtra** package.  This package is also useful for putting two graphical objects in one pane. 
+To do this, we first need to calculate the summary statistics and figure out where to place them along the x and y axes.  Then we'll add the information the graphic as *labels* with `geom_text()`.  The other way to do this, which I use more often, is to add tables to graphical objects using the **gridExtra** package.  This package is also useful for putting two graphical objects in one pane. 
 
-We are going to add the mean and standard deviation of each `type` of egg measurement for each `species` as text in the graphic.  First let's calculate the statistics we want for each group.  I often use `group_by` and `summarise` from the **dplyr** package for this kind of work.  We'll name the new summary data.frame `sumdat`.  Notice that we need to round the results here to a reasonable number of significant digits.
+We are going to add the mean and standard deviation of each `type` of egg measurement for each `species` as text in the graphic.  First let's calculate the statistics we want for each group.  I often use `group_by()` and `summarise()` from the **dplyr** package for this kind of work.  We'll name the new summary data.frame `sumdat`.  Notice that we need to round the results here to a reasonable number of significant digits.
 
 ```{r, message = FALSE, warning = FALSE}
 library(dplyr)
@@ -559,7 +617,7 @@ library(dplyr)
 
 You can see in the final plot that I decided to add the summary statistics beneath each boxplot.  This means we can still use `species` as the variable that defines where the text will be placed on the x axis, and `type` will define which facet it will be in.  However, we'll need to calculate a new variable to define where the text will be positioned on the y axis.  
 
-After some trial and error (which you don't get to see), I decided the minimum y value from each facet minus 0.5 would be a good place to put the text in the plot.  We can calculate this number separately for each `type` using `group_by`/`summarise` again.  We'll name the y position variable `yloc`.  We can then add `yloc` to `sumdat` using `inner_join` from `dplyr` to *join* or *merge* the two datasets.
+After some trial and error (which you don't get to see), I decided the minimum y value from each facet minus 0.5 would be a good place to put the text in the plot.  We can calculate this number separately for each `type` using `group_by()`/`summarise()` again.  We'll name the y position variable `yloc`.  We can then add `yloc` to `sumdat` using `inner_join()` from `dplyr` to *join* or *merge* the two datasets.
 
 ```{r}
 ( loc = eggs2 %>% 
@@ -569,38 +627,39 @@ After some trial and error (which you don't get to see), I decided the minimum y
 ( sumdat = inner_join(sumdat, loc) )
 ```
 
-Now all we have left to do is to create the text labels to add to the graphic.  This involves combining all the appropriate text and values that we want to use as labels.  Here we will do that using `paste0`.  We need the labels we are making in our dataset, which we will achieve via `mutate` from `dplyr`.  You can see in the final graphic that I put the means and standard deviations on separate lines.  A line break in R is represented by `\n`, which we will include when making the labels.
+Now all we have left to do is to create the text labels to add to the graphic.  This involves combining all the appropriate text and values that we want to use as labels.  Here we will do that using `paste0()`.  We need the labels we are making in our dataset, which we will achieve via `mutate()` from **dplyr**.  You can see in the final graphic that I put the means and standard deviations on separate lines.  A line break in R is represented by `\n`, which we will include when making the labels.
 
 If you don't know data manipulation in R very well, this may seem like a huge amount of work in order to get what you want.  I am showing you this, though, because I wanted to drive the point home that working with a dataset outside of **ggplot2** is often required in order to take full advantage of the strengths of this package.  If you aren't comfortable with this sort of work in R then **ggplot2** likely won't be a useful tool for you for making complicated final graphics.  Another option is to add such information outside R using a different software package.
 
 ```{r}
-sumdat = mutate(sumdat, label = paste0("Mean=", Mean, " mm", "\n", "SD=", SD," mm") )
+sumdat = mutate(sumdat, label = paste0("Mean=", Mean, " mm", "\n", 
+                                       "SD=", SD," mm") )
 
 sumdat$label
 ```
 
 #### Defining a new dataset for plotting for a specific layer
 
-We can now add text to a graphic using `geom_text`.  For the first time we'll be defining a new dataset for plotting within a specific geom layer.  Defining a new dataset in a geom will override the global dataset for the graphic that we defined in `ggplot`.  The rest of the graphic will still plot information from the dataset `eggs2`, but `geom_text` will plot what is in the `sumdat` dataset.  When defining a dataset within a layer it is safest to type out the `data` argument, as the dataset is not the first argument in the geom layers like it is in `ggplot`.
+We can now add text to a graphic using `geom_text()`.  For the first time we'll be defining a new dataset for plotting within a specific geom layer.  Defining a new dataset in a geom will override the global dataset for the graphic that we defined in `ggplot()`.  The rest of the graphic will still plot information from the dataset `eggs2`, but `geom_text()` will plot what is in the `sumdat` dataset.  When defining a dataset within a layer it is safest to type out the `data` argument, as the dataset is not the first argument in the geom layers like it is in `ggplot()`.
 
-Notice we have to set the y position for `geom_text` because we're using a different variable for `y` than we had for the rest of the graphic.  We map the y axis position to `yloc` within `aes`.  
+Notice we have to set the y position for `geom_text()` because we're using a different variable for `y` than we had for the rest of the graphic.  We map the y axis position to `yloc` within `aes`.  
 
-The `geom_text` geom requires us to define a `label` variable within `aes`.  The help files for individual geoms will tell you if there are required aesthetics, which you should always check if you are using a geom for the first time.  We will map the variable `label` to the `label` aesthetic.
+The `geom_text()` geom requires us to define a `label` variable within `aes`.  The help files for individual geoms will tell you if there are required aesthetics, which you should always check if you are using a geom for the first time.  We will map the variable `label` to the `label` aesthetic.
 
-```{r, message = FALSE}
+```{r, message = FALSE, fig.height = 4}
 g1 + geom_text(data = sumdat, aes(label = label, y = yloc) )
 ```
 
-As often happens, we need to do some adjustments to the text we've added to make the graphic look nicer.  Here we'll adjust the line height, change the vertical justification, and change the size of the text within `geom_text`.
+As often happens, we need to do some adjustments to the text we've added to make the graphic look nicer.  Here we'll adjust the line height, change the vertical justification, and change the size of the text within `geom_text()`.
 
-```{r, message = FALSE}
+```{r, message = FALSE, fig.height = 4}
 ( g1 = g1 + geom_text(data = sumdat, aes(label = label, y = yloc),
                       lineheight = .9, vjust = .3, size = 4) )
 ```
 
-That's the final graphic that I showed you.  This is what the code looks like when it is put all together instead of adding layers line by line.
+This is what the code looks like when it is put all together instead of adding layers line by line.
 
-```{r, message = FALSE}
+```{r, message = FALSE, fig.height = 4}
 ( g1 = ggplot(eggs2, aes(x = species, y = measurement) ) +
  	geom_boxplot() + 
 	facet_wrap(~type, scales = "free_y") +
@@ -608,10 +667,10 @@ That's the final graphic that I showed you.  This is what the code looks like wh
 	             color = "grey64", fill = "grey64") +
 	stat_summary(fun.y = mean, geom = "point", shape = 18,
 	             size = 5, color = "grey24") +
-	theme_bw() + 
+	theme_bw(base_size = 16) + 
 	theme(panel.grid.major.x = element_blank(),
 	      strip.background = element_blank(),
-	      strip.text = element_text(hjust = 0, face = "bold", size = 12) ) +
+	      strip.text = element_text(hjust = 0, face = "bold", size = 13) ) +
  	labs(x = NULL,
  	     y = "Measurement (mm)") +
 	geom_text(data = sumdat, aes(label = label, y = yloc),
@@ -620,11 +679,11 @@ That's the final graphic that I showed you.  This is what the code looks like wh
 
 In making this graph, I've relied on the graphic displayed in the plotting window to help decide on spacing and point sizes and such.  Be careful using this method, because we haven't actually set the plotting window size to anything.  In fact, you can't set the RStudio plotting window to a specific size at this time.  Depending on the size and shape we save the graphic as, we may decide we need to make a few more adjustments.  One way to check how things will look at different sizes is to preview the plot at difference sizes using the `Export` drop down menu in the RStudio **Plots** pane.  You can also just save the graphic to your desired size and take a look at it.
 
-### Saving a plot with `ggsave`
+### Saving a plot with `ggsave()`
 
-We'll save the plots using `ggsave` from **ggplot2**.  You can save graphics in all kinds of formats, but here we'll save the graphic as a PDF and as a PNG file.  The sizes I chose are arbitrary, and are just to demonstrate some of the `ggsave` options.  
+We'll save the plots using `ggsave()` from **ggplot2**.  You can save graphics in all kinds of formats, but here we'll save the graphic as a PDF and as a PNG file.  The sizes I chose are arbitrary, and are just to demonstrate some of the `ggsave()` options.  
 
-By default `ggsave` saves the last plot made to whatever size your plot window is.  You can set the graphic size via `width` and `height`.
+By default `ggsave()` saves the last plot made to whatever size your plot window is.  You can set the graphic size via `width` and `height`.
 
 It can be safer to define the graphic you want saved by name using the `plot` argument. If you want the plot to look like it does in the plotting window, simply leave `height` and `width` at their default values. 
 
@@ -633,7 +692,7 @@ ggsave("final plot 1.pdf", width = 7, height = 7) # setting width and height (de
 ggsave("final plot 1.png", plot = g1) # using default size based on plotting window
 ```
 
-At this point I decided that the dot size was too big and the tick text on the x axis was too small.  I edited the `geom_dotplot` argument `dotsize` and the `theme` argument `axis.text.x` and then re-saved the final plot at a final size, which was 9 inches wide and 8 inches high. The graphic at this size is shown below.
+At this point I decided that the dot size was too big.  I edited the `geom_dotplot()` argument `dotsize` and then re-saved the final plot at a final size, which was 9 inches wide and 8 inches high. The graphic at this size is shown below.
 
 ```{r finally1, message = FALSE, fig.height = 8, fig.width = 9}
 (g1 = ggplot(eggs2, aes(x = species, y = measurement) ) +
@@ -643,11 +702,10 @@ At this point I decided that the dot size was too big and the tick text on the x
 	             color = "grey64", fill = "grey64", dotsize = .5) +
 	stat_summary(fun.y = mean, geom = "point", shape = 18,
 	             size = 5, color = "grey24") +
-	theme_bw() + 
+	theme_bw(base_size = 16) + 
 	theme(panel.grid.major.x = element_blank(),
 	      strip.background = element_blank(),
-	      strip.text = element_text(hjust = 0, face = "bold", size = 12),
-	      axis.text.x = element_text(size = 12) ) +
+	      strip.text = element_text(hjust = 0, face = "bold", size = 14) ) +
  	labs(x = NULL,
  	     y = "Measurement (mm)") +
 	geom_text(data = sumdat, aes(label = label, y = yloc),
@@ -667,42 +725,48 @@ The last graphic we are going to make is one that displays the results from an a
 
 ```{r}
 res = structure(list(Diffmeans = c(-0.27, 0.11, -0.15, -1.27, -1.18
-), Lower.CI = c(-0.63, -0.25, -0.51, -1.63, -1.54), Upper.CI = c(0.09, 
-0.47, 0.21, -0.91, -0.82), plantdate = structure(c(2L, 3L, 3L, 
-1L, 1L), .Label = c("Feb25", "Jan2", "Jan28"), class = "factor"), 
-    stocktype = structure(c(2L, 2L, 1L, 2L, 1L), .Label = c("bare", 
-    "cont"), class = "factor")), class = "data.frame", row.names = c(NA, 
--5L))
+),
+                    Lower.CI = c(-0.63, -0.25, -0.51, -1.63, -1.54), 
+                    Upper.CI = c(0.09, 0.47, 0.21, -0.91, -0.82), 
+                    plantdate = structure(c(2L, 3L, 3L, 1L, 1L), 
+                      .Label = c("Feb25", "Jan2", "Jan28"), class = "factor"), 
+                    stocktype = structure(c(2L, 2L, 1L, 2L, 1L), 
+                      .Label = c("bare","cont"), class = "factor") ),  
+                    class = "data.frame", row.names = c(NA, -5L) )
 str(res)
 res
 ```
 
-I added the two factor variables to the results dataset before I saved it so I would be able to tell which groups were being compared to the control on each row.  The two factors are `plantdate`, which has three levels that indicate the date that trees were planted, and `stocktype`, which has two levels and indicates the kind of stock (either bare root or in a container).  The control group was bare root trees planted on January 2.  There were six groups including the control group, and so there are five comparisons in this table of results.  I provided you the graphic we are working towards as `Workshop final plot 2.pdf`, which is shown below.
+I added the two factor variables to the results dataset before I saved it so I would be able to tell which groups were being compared to the control on each row.  The two factors are `plantdate`, which has three levels that indicate the date that trees were planted, and `stocktype`, which has two levels and indicates the kind of stock (either bare root or in a container).  The control group was bare root trees planted on January 2.  There were six groups including the control group, and so there are five comparisons in this table of results.  
 
-```{r finalgraph, echo = FALSE, fig.width = 8, fig.height = 7, message = FALSE}
+The graphic we are working towards is shown below.
+
+```{r finalgraph2, echo = FALSE, fig.width = 8, fig.height = 7, message = FALSE}
 res$plantdate = factor(res$plantdate, 
 				   levels = c("Jan2", "Jan28", "Feb25"),
 				   labels = c("January 2", "January 28", "February 25") )
 ( g2 = ggplot(res, aes(x = plantdate, y = Diffmeans, group = stocktype)) +
- 	geom_point(position = position_dodge(width = .75)) +
+ 	geom_point(position = position_dodge(width = .75) ) +
  	geom_errorbar(aes(ymax = Upper.CI, ymin = Lower.CI, 
  				   linetype = stocktype,
  			    width = c(.2, .4, .4, .4, .4)), 
- 			    position = position_dodge(width = .75)) +
-	theme_bw() + 
+ 			    position = position_dodge(width = .75) ) +
+	theme_bw(base_size = 16) + 
  	ylab("Difference in Growth (cm)") + 
 		xlab("Planting Date") +
 	geom_rect(xmax = Inf, xmin = -Inf, ymax = .25, ymin = -.25, 
 			fill = "grey54", alpha = .05) +
- 	scale_y_continuous(breaks = seq(-1.5, .5, by = .25)) +
+ 	scale_y_continuous(breaks = seq(-1.5, .5, by = .25) ) +
 	coord_flip() +
  	scale_linetype_manual(values = c("solid", "twodash"), 
 					  name = element_blank(),
 					  labels = c("Bare root", "Container"),
-					  guide = guide_legend(reverse = TRUE)) +
-	theme(legend.position = c(.2, .1), 
+					  guide = guide_legend(reverse = TRUE) ) +
+	theme(legend.position = c(.25, .1), 
 		 legend.direction = "horizontal",
-		 panel.grid = element_blank()) +
+		 panel.grid.major.y = element_blank(),
+		 panel.grid.minor.y = element_blank(),
+		 panel.grid.minor.x = element_blank() ) +
 	annotate(geom = "text", x = .5, y = 0, 
 		    label = "Zone of no difference", size = 3) )
 res = structure(list(Diffmeans = c(-0.27, 0.11, -0.15, -1.27, -1.18
@@ -735,7 +799,7 @@ We'll start by plotting the estimated differences in means as points with `plant
 
 #### Adding error bars to a plot
 
-We can add the 95% confidence intervals around the estimated means as error bars with `geom_errorbar`.  We have to map the aesthetics `ymin` and `ymax` to variables that represent the *ends* of the error bars.  In fact, `ymin` and `ymax` are required aesthetics in `geom_errorbar`.  We have the upper and lower confidence limits in our dataset for this purpose.
+We can add the 95% confidence intervals around the estimated means as error bars with `geom_errorbar()`.  We have to map the aesthetics `ymin` and `ymax` to variables that represent the *ends* of the error bars.  In fact, `ymin` and `ymax` are required aesthetics in `geom_errorbar()`.  We have the upper and lower confidence limits in our dataset for this purpose.
 
 ```{r}
 ( g2 = ggplot(res, aes(x = plantdate, y = Diffmeans) ) +
@@ -745,9 +809,9 @@ We can add the 95% confidence intervals around the estimated means as error bars
 
 #### Dodging to avoid overlap
 
-When we have two different stock types at a single planting date, the error bars overlap and the graphic is difficult to understand.  To avoid this, we will do what is called *dodging*.  In order to *dodge* the overlapping points, we need to define which variable tells us that we have two values at a single planting date.  In this case that variable is `stocktype`, so we map the `group` argument in `aes` to `stocktype`.  
+When we have two different stock types at a single planting date, the error bars overlap and the graphic is difficult to understand.  To avoid this, we will do what is called *dodging*.  In order to *dodge* the overlapping points, we need to define which variable tells us that we have two values at a single planting date.  In this case that variable is `stocktype`, so we map the `group` argument in `aes()` to `stocktype`.  
 
-We want to dodge whenever we get an overlap along the x axis, so we'll choose the amount we want to dodge by using the `width` argument in `position_dodge`.  Notice we have to dodge both the points and the error bars, and that we do it by the same `width` amount.  Common dodging amounts are 0.9 and 0.75.
+We want to dodge whenever we get an overlap along the x axis, so we'll choose the amount we want to dodge by using the `width` argument in `position_dodge()`.  Notice we have to dodge both the points and the error bars, and that we do it by the same `width` amount.  Common dodging amounts are 0.9 and 0.75.
 
 ```{r}
 ( g2 = ggplot(res, aes(x = plantdate, y = Diffmeans, group = stocktype) ) +
@@ -758,7 +822,7 @@ We want to dodge whenever we get an overlap along the x axis, so we'll choose th
 
 #### Setting the `width` of error bars for unbalanced factors
 
-Now we have gotten rid of the overlap problem.  But this is where things start getting a bit complicated.  The width of the error bar is twice as big for the single stock type on January 2 as it is when we have two stock types on the other dates.  We can control this using the `width` argument in `geom_errorbar`.  Usually we set `width` to a constant and all the widths would be changed the same way.  Here we'll need to set the `width` of the first error bar to *half* the value of the others.  This means we'll have to set `width` to a vector defining the width of all five error bars (so the vector has a length of 5).
+Now we have gotten rid of the overlap problem.  But this is where things start getting a bit complicated.  The width of the error bar is twice as big for the single stock type on January 2 as it is when we have two stock types on the other dates.  We can control this using the `width` argument in `geom_errorbar()`.  Usually we set `width` to a constant and all the widths would be changed the same way.  Here we'll need to set the `width` of the first error bar to *half* the value of the others.  This means we'll have to set `width` to a vector defining the width of all five error bars (so the vector has a length of 5).
 
 ```{r, message = FALSE}
 ( g2 = ggplot(res, aes(x = plantdate, y = Diffmeans, group = stocktype) ) +
@@ -787,7 +851,7 @@ Error: Aesthetics must be either length 1 or the same as the data (2): width
 
 This is our first error message of the day.  You can often tell the difference between error messages and other messages by whether or not the plot prints to the plotting window.  In this case, no plot is printed in the plotting window and so something needs to be changed in the code before we get the plot we want.
 
-The error message isn't entirely clear, but it does give us some hints about where the problem may be.  It appears that something is wrong with the `width` aesthetic compared to the other aesthetics.  I found that I had to move `width` inside `aes` to get `linetype` and `width` to play nicely together.  It is unusual, but it solved the problem and things went more smoothly once that was done.  If we'd had even numbers of observations per planting date we wouldn't have had this problem.
+The error message isn't entirely clear, but it does give us some hints about where the problem may be.  It appears that something is wrong with the `width` aesthetic compared to the other aesthetics.  I found that I had to move `width` inside `aes()` to get `linetype` and `width` to play nicely together.  It is unusual, but it solved the problem and things went more smoothly once that was done.  If we'd had even numbers of observations per planting date we wouldn't have had this problem.
 
 ```{r basicgraph, message = FALSE}
 ( g2 = ggplot(res, aes(x = plantdate, y = Diffmeans, group = stocktype) ) +
@@ -801,16 +865,16 @@ The error message isn't entirely clear, but it does give us some hints about whe
 Now that we have the basic graphic built, let's start polishing it up by setting the theme to `theme_bw` as well as changing the axis labels.
 
 ```{r, message = FALSE}
-( g2 = g2 + theme_bw() + 
+( g2 = g2 + theme_bw(base_size = 16) + 
       labs(x = "Planting Date",
            y = "Difference in Growth (cm)") )
 ```
 
 #### Adding shaded rectangles to an area of the plot
 
-It can be informative to give some indication of what a practical difference would be on the graphic.  In this case, a difference in mean growth of 0.25 cm more or less compared to the control would be practically meaningful to growers.  In the past I've indicated the practically important limits using horizontal lines with `geom_hline`.  Today we'll add a shaded rectangle to indicate this "Zone of no difference" using `geom_rect`.
+It can be informative to give some indication of what a practical difference would be on the graphic.  In this case, a difference in mean growth of 0.25 cm more or less compared to the control would be practically meaningful to growers.  In the past I've indicated the practically important limits using horizontal lines with `geom_hline()`.  Today we'll add a shaded rectangle to indicate this "Zone of no difference" using `geom_rect()`.
 
-There are some required aesthetics in `geom_rect` that indicate where the *edges* of the rectangle should be drawn.  We are setting these to constants, so these required aesthetics will be set outside of `aes`.  We'll set `alpha` to make the rectangle see-through and set the fill color to some gray shade with `fill`.  Because we want the rectangle to go all the way across the x axis we use `Inf`/`-Inf`.
+There are some required aesthetics in `geom_rect()` that indicate where the *edges* of the rectangle should be drawn.  We are setting these to constants, so these required aesthetics will be set outside of `aes()`.  We'll set `alpha` to make the rectangle see-through and set the fill color to some gray shade with `fill`.  Because we want the rectangle to go all the way across the x axis we use `Inf`/`-Inf`.
 
 ```{r, message = FALSE}
 ( g2 = g2 + geom_rect(xmin = -Inf, xmax = Inf, ymin = -.25, ymax = .25,
@@ -819,7 +883,7 @@ There are some required aesthetics in `geom_rect` that indicate where the *edges
 
 #### Changing the axis breaks
 
-If 0.25 cm is the practically important difference, we may want to show finer tick marks or *breaks* on the y axis.  Notice that right now the breaks are set for every 0.5 cm change.  We can control axes with the appropriate scale functions.  In this case, the y axis is continuous and we'll use `scale_y_continuous`.  If we wanted to control the x axis, which has a discrete scale in this plot, we would use `scale_x_discrete`.
+If 0.25 cm is the practically important difference, we may want to show finer tick marks or *breaks* on the y axis.  Notice that right now the breaks are set for every 0.5 cm change.  We can control axes with the appropriate scale functions.  In this case, the y axis is continuous and we'll use `scale_y_continuous()`.  If we wanted to control the x axis, which has a discrete scale in this plot, we would use `scale_x_discrete()`.
 
 We'll make axis breaks every 0.25 cm instead of 0.5 cm using a sequence of numbers from the -1.5 to 0.5 by .25 (see `?seq` for more info).
 
@@ -827,7 +891,7 @@ We'll make axis breaks every 0.25 cm instead of 0.5 cm using a sequence of numbe
 ( g2 = g2 + scale_y_continuous(breaks = seq(-1.5, .5, by = .25) ) )
 ```
 
-The axes of the current graphic are reversed compared to the final graphic that I showed you when we started this exercise.  We could have built this entire graphic from the start by defining the axes differently and using `geom_errorbarh` to create horizontal error bars instead of the vertical ones we get with `geom_errorbar`.  However, there are few horizontal geoms available in **ggplot2** (but see package **ggstance**), so I wanted to show you how `coord_flip` works for making horizontal plots.  It simply flips the axes.
+The axes of the current graphic are reversed compared to the final graphic that I showed you when we started this exercise.  We could have built this entire graphic from the start by defining the axes differently and using `geom_errorbarh()` to create horizontal error bars instead of the vertical ones we get with `geom_errorbar()`.  However, there are few horizontal geoms available in **ggplot2** (but see package **ggstance**), so I wanted to show you how `coord_flip()` works for making horizontal plots.  It simply flips the axes.
 
 ```{r, message = FALSE}
 ( g2 = g2 + coord_flip() )
@@ -835,9 +899,9 @@ The axes of the current graphic are reversed compared to the final graphic that 
 
 #### Changing the appearance of the legend
 
-There are a few final appearance changes we need to make on this graphic.  First, I didn't like the dotted `linetype` that we got by default.  We can change the type of lines we get with the function `scale_linetype_manual`.  Most aesthetics have a scale function that you can use to change the default aesthetic settings (we saw `color` and `fill` scales earlier in the workshop).  
+There are a few final appearance changes we need to make on this graphic.  First, I didn't like the dotted `linetype` that we got by default.  We can change the type of lines we get with the function `scale_linetype_manual()`.  Most aesthetics have a scale function that you can use to change the default aesthetic settings (we saw `color` and `fill` scales earlier in the workshop).  
 
-We'll set the `values` of the line types in `scale_linetype_manual`.  We'll also change the title and the labels of the groups that are displayed in the legend with this function, as well, via `name` and `labels`, respectively.  
+We'll set the `values` of the line types in `scale_linetype_manual()`.  We'll also change the title and the labels of the groups that are displayed in the legend with this function, as well, via `name` and `labels`, respectively.  
 
 ```{r, message = FALSE}
 g2 + scale_linetype_manual(values = c("solid", "twodash"),
@@ -845,7 +909,7 @@ g2 + scale_linetype_manual(values = c("solid", "twodash"),
                            labels = c("Bare root", "Container") )
 ```
 
-It would be more aesthetically pleasing to have the order that the lines show in the legend match the order that the lines show up in the graphic - in this case the dashed line/`Container` group comes first in the plot.  We can control this inside `scale_linetype_manual` as well, using the `guide` argument with `guide_legend`. We set `reverse` to `TRUE` to reverse the order of the legend.  The `guide_legend` function allows us to control many aspects of the legend.
+It would be more aesthetically pleasing to have the order that the lines show in the legend match the order that the lines show up in the graphic - in this case the dashed line/`Container` group comes first in the plot.  We can control this inside `scale_linetype_manual()` as well, using the `guide` argument with `guide_legend()`. We set `reverse` to `TRUE` to reverse the order of the legend.  The `guide_legend()` function allows us to control many aspects of the legend.
 
 ```{r, message = FALSE}
 ( g2 = g2 + scale_linetype_manual(values = c("solid", "twodash"), 
@@ -856,26 +920,31 @@ It would be more aesthetically pleasing to have the order that the lines show in
 
 #### Moving the legend inside the plot panel
 
-We have plenty of blank space within the graphic to fit the legend.  Let's move the legend inside the plot panel and switch it to horizontal from vertical.  This can be done in `theme`.  I decided to remove all the grid lines, so we'll do that in `theme` while we're at it.  Keeping the x axis grid lines would have been a reasonable, as well.
+We have plenty of blank space within the graphic to fit the legend.  Let's move the legend inside the plot panel and switch it to horizontal from vertical.  This can be done in `theme()`.  
 
-We use `legend.position` to move the legend inside the plot panel and `legend.direction` to switch it to a horizontal format.  The legend position here is based on coordinates between 0 and 1 on each axis, and took trial and error to get a nice placement.  You can also use options such as, e.g., `"bottom"` in `legend.position` to leave the legend outside the plot panel but move it to a different side of the plot.  See the help page for `theme` for more options.
+We use `legend.position` to move the legend inside the plot panel and `legend.direction` to switch it to a horizontal format.  The legend position here is based on coordinates between 0 and 1 on each axis, and took trial and error to get a nice placement.  You can also use options such as, e.g., `"bottom"` in `legend.position` to leave the legend outside the plot panel but move it to a different side of the plot.  See the help page for `theme()` for more options.
+
+I also decided to remove the y axis grid lines all together along with the minor x axis gridlines, which we'll also do in `theme()` while we're at it. 
 
 On a side note, the amount of blank space in the panel of this graphic means it would be a good candidate for adding a table of grouped summary statistics or a small plot displaying the raw data.  Both of those things could be achieved fairly easily by combining **ggplot2** with **gridExtra**.
 
 ```{r, message = FALSE}
-( g2 = g2 + theme(legend.position = c(.2, .1),
+( g2 = g2 + theme(legend.position = c(.25, .1),
                   legend.direction = "horizontal",
-                  panel.grid = element_blank() ) )
+                  panel.grid.major.y = element_blank(),
+                  panel.grid.minor.y = element_blank(),
+                  panel.grid.minor.x = element_blank() ) )
 ```
 
-#### Adding a label with `annotate`
+#### Adding a label with `annotate()`
 
-The last thing we want to do is add the label to our "Zone of no difference" rectangle.  Unlike adding multiple labels all positioned separately by group like in the last graphic, we want to add a single label.  This is a clue that we should add the text using `annotate` instead of `geom_text`.  It would have made sense to add the rectangle via `annotate`, as well.
+The last thing we want to do is add the label to our "Zone of no difference" rectangle.  Unlike adding multiple labels all positioned separately by group like in the last graphic, we want to add a single label.  This is a clue that we should add the text using `annotate()` instead of `geom_text()`.  It would have made sense to add the rectangle via `annotate()`, as well.
 
-The only complicated thing here is to remember that we flipped the plot axes.  This means that while the y axis now shows up on the x axis, we still need to refer to it as the y axis when placing our label via `annotate`.  In addition to placing the label we'll also shrink the size of the text to make it fit nicely inside the rectangle.  Because we are setting all aesthetics, we do it outside `aes`.  Notice we define which `geom` we want to annotate with in `annotate`; in this case, we use `"text"`.
+The only complicated thing here is to remember that we flipped the plot axes.  This means that while the y axis now shows up on the x axis, we still need to refer to it as the y axis when placing our label via `annotate()`.  In addition to placing the label we'll also shrink the size of the text to make it fit nicely inside the rectangle.  Because we are setting all aesthetics, we do it outside `aes()`.  Notice we define which geom we want to annotate with in `annotate()`; in this case, we use `"text"`.
 
 ```{r, message = FALSE}
-( g2 = g2 + annotate(geom = "text", x = .5, y = 0, label = "Zone of no difference", size = 3) )
+( g2 = g2 + annotate(geom = "text", x = .5, y = 0, 
+                     label = "Zone of no difference", size = 3) )
 ```
 
 And there we have it, the final graphic.  Here's what the code looks like all together.  The graphic is displayed at the size of the final graphic I showed you before we began working on this graphic.
@@ -887,25 +956,27 @@ And there we have it, the final graphic.  Here's what the code looks like all to
                          linetype = stocktype,
                          width = c(.2, .4, .4, .4, .4) ),
                      position = position_dodge(width = .75) ) +
-      theme_bw() +
+      theme_bw(base_size = 16) +
       labs(x = "Planting Date",
-             y = "Difference in Growth (cm)") +
+           y = "Difference in Growth (cm)") +
       geom_rect(xmin = -Inf, xmax = Inf, ymin = -.25, ymax = .25,
                 fill = "grey54", alpha = .05) +
-      scale_y_continuous(breaks = seq(-1.5, .5, by = .25)) +
+      scale_y_continuous(breaks = seq(-1.5, .5, by = .25) ) +
       coord_flip() +
       scale_linetype_manual(values = c("solid", "twodash"),
                             name = element_blank(),
                             labels = c("Bare root", "Container"),
                             guide = guide_legend(reverse = TRUE) ) +
-      theme(legend.position = c(.2, .1),
+      theme(legend.position = c(.25, .1),
             legend.direction = "horizontal",
-            panel.grid = element_blank()) +
+            panel.grid.major.y = element_blank(),
+            panel.grid.minor.y = element_blank(),
+            panel.grid.minor.x = element_blank() ) +
       annotate(geom = "text", x = .5, y = 0,
                label = "Zone of no difference", size = 3) )
 ```
 
-You would save this graphic in the same way as before with `ggsave`.
+You would save this graphic in the same way as before with `ggsave()`.
 
 ```{r, message = FALSE, eval = FALSE}
 ggsave("final plot 2.pdf", width = 8, height = 7)
