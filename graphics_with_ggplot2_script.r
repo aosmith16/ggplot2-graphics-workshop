@@ -1,4 +1,4 @@
-# 2019-05-23
+# 2020-04
 
 # Today we are going to go over some steps for how to create 
 	# graphics using the ggplot2 package
@@ -24,7 +24,7 @@
 	# This is where to report or check for bugs (under "Issues")
 	# https://github.com/tidyverse/ggplot2
 # See ggplot2 extensions in other packages
-	# http://www.ggplot2-exts.org/gallery/
+	# https://exts.ggplot2.tidyverse.org/gallery/
 
 # In the first part of the workshop, we'll learn some of the basic syntax
 	# by making some simple exploratory plots on a built-in dataset
@@ -38,7 +38,7 @@
 
 # First, load the package ggplot2 ----
 
-# The current version of ggplot2 is 3.1.1
+# The current version of ggplot2 is 3.3.0
 	# If you don't have the current version, 
 		# you will need to install it prior to loading
 
@@ -101,18 +101,19 @@ ggplot(data = mtcars)
     # grey background and white gridlines
 ggplot(data = mtcars, aes(x = wt, y = mpg) )
 
-
-# We add the desired geoms as "layers" using
-	# the plus sign
-# It looks like this:
+# Scatterplot
+# We add the desired geometric objects or *geoms* 
+    # as "layers" using the plus sign
+    # to make different kinds of plots,
+    # which looks like:
 ggplot(data = mtcars, aes(x = wt, y = mpg) ) +
 	geom_point()
 
-# The plus sign is how we add more layers to the plot
-# You can put this all on one line 
+# You can put this code all on one line 
 	# but it's standard to organize ggplot code by putting layers 
    	# on new lines with indentations for readability
 
+# Boxplot
 # Now let's make a boxplot of mpg for each cylinder type
 # The x axis for boxplots is categorical,
     # and we can't forget to define the "cyl" variable 
@@ -156,7 +157,7 @@ ggplot(mtcars, aes(x = wt, y = mpg, size = disp) ) +
 # Adding more layers ----
 # We can put more layers on a graphic by adding more geoms
 	# Let's add points on top of the boxplots, 
-	# Mapping colors to be different for the different cylinder categories
+	# mapping colors to change by cylinder categories
 ggplot(mtcars, aes(x = factor(cyl), y = mpg, color = factor(cyl) ) ) +
 	geom_boxplot() +
 	geom_point()
@@ -257,13 +258,15 @@ ggplot(mtcars, aes(x = numcyl, y = mpg) ) +
 # See the "limits" argument for more info on 
 	# changing the order of the factor levels 
     # and how the legend is displayed
+# Setting names to the colors can control which
+    # color goes to which factor level
 
 # You can assign new colors by name or by hexadecimal values
 ggplot(mtcars, aes(x = numcyl, y = mpg) ) +
 	geom_boxplot( aes(fill = numcyl) ) +
 	geom_point( aes(color = am) ) +
 	scale_fill_manual(values = c("light green", "sky blue", "pink") ) +
-	scale_color_manual(values = c("#009E73", "#E69F00") )
+    scale_color_manual(values = c(Manual = "#009E73", Auto = "#E69F00") )
 	
 	# Note that if you only map a variable to fill and you use
 		# scale_color_manual(), nothing will happen
@@ -310,23 +313,23 @@ ggplot(mtcars, aes(x = mpg) ) +
 # We can change this by setting the y axis 
 	# to one of the computed variables 
 	# these geoms create, called count and density,
-    # which we can use via the stat() function
+    # which we can use via the after_stat() function
 # Here is the density on the count scale
-	# We are mapping stat(count) to the y axis, 
+	# We are mapping after_stat(count) to the y axis, 
 	# so we do this within aes() for the density geom
 ggplot(mtcars, aes(x = mpg) ) +
 	geom_histogram() + 
-	geom_density( aes(y = stat(count) ) )
+	geom_density( aes(y = after_stat(count) ) )
 
 # Map fill color to transmission type globally,
     # which fills both the histogram and the density overlay
 ggplot(mtcars, aes(x = mpg, fill = am) ) +
 	geom_histogram() + 
-	geom_density( aes(y = stat(count) ) )
+	geom_density( aes(y = after_stat(count) ) )
 
 # Notice that layer order can matter
 ggplot(mtcars, aes(x = mpg, fill = am) ) +
-	geom_density( aes(y = stat(count) ) ) +
+	geom_density( aes(y = after_stat(count) ) ) +
 	geom_histogram()
 
 # This graphic might be more useful if we make the 
@@ -335,7 +338,7 @@ ggplot(mtcars, aes(x = mpg, fill = am) ) +
 # alpha is an aesthetic; here we set alpha to a constant, so it is done outside of aes()
 ggplot(mtcars, aes(x = mpg, fill = am) ) +
 	geom_histogram() + 
-	geom_density( aes(y = stat(count) ), alpha = .5)
+	geom_density( aes(y = after_stat(count) ), alpha = .5)
 
 # Bar graphs ---
 
@@ -345,7 +348,7 @@ ggplot(mtcars, aes(x = mpg, fill = am) ) +
 ggplot(mtcars, aes(x = numcyl) ) +
 	geom_bar()
 
-# If you want to make a bar graph using a variable
+# If you want to make a bar graph using a y variable
 	# from a dataset instead of counts see geom_col()
 
 # There are a just a few more basics to cover before
@@ -382,11 +385,14 @@ ggplot(mtcars, aes(x = wt, y = mpg) ) +
 
 # For example, we can add the mean weight as red squares
 	# on top of the boxplot/dotplot graphic using stat_summary()
-# To make a mean of our "y" variable, we use the "fun.y" argument
+# Since x is categorical, we use the "fun" argument
+    # to define the function to summarize with
+    # Things are a little different if x were continuous,
+        # so be aware of that
 ggplot(mtcars, aes(x = numcyl, y = mpg) ) +
 	geom_boxplot( aes(color = numcyl) ) +
 	geom_dotplot(fill = "purple", binaxis = "y") +
-	stat_summary(fun.y = mean, geom = "point", size = 5, 
+	stat_summary(fun = mean, geom = "point", size = 5, 
 			   shape = 22, fill = "red")
 # We also set three aesthetics to constants, size, shape, and fill
 	# I used shape = 22, which is a square
@@ -403,16 +409,13 @@ ggplot(mtcars, aes(x = numcyl, y = mpg) ) +
 	# The default line type is a smoothed loess line, so we have to set
 	# the method here to lm for linear regression lines
 	# We also get confidence intervals by default, which may
-		# or may not be appropriate
+		# or may not be appropriate; we'll remove with se = FALSE
 ggplot(mtcars, aes(x = wt, y = mpg) ) +
 	geom_point() + 
-	geom_smooth(method = "lm")
+	geom_smooth(method = "lm", se = FALSE)
 
 # We can fit a regression line separately by group by 
 	# adding aesthetic mapping
-# We can get rid of confidence envelopes by using se = FALSE
-	# as confidence envelopes aren't really appropriate 
-	# during exploratory work
 ggplot(mtcars, aes(x = wt, y = mpg, color = numcyl) ) +
 	geom_point() + 
 	geom_smooth(method = "lm", se = FALSE)

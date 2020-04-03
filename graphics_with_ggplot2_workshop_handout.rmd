@@ -1,6 +1,6 @@
 ---
 geometry: margin=.5in, bottom=.5in
-date:  May 23, 2019
+date:  April 2020
 output: 
  pdf_document:
   toc: true
@@ -16,9 +16,13 @@ opts_chunk$set(comment = NA, tidy = FALSE, dev = "pdf", fig.height = 3)
 
 # Graphics with ggplot2
 
+```{r hex, echo = FALSE, out.width = "100px"}
+knitr::include_graphics("hex_ggplot2.png")
+```
+
 Today we will be covering some of the basics of how to use the R package **ggplot2**.  The goal is to introduce you to some of the terminology used in **ggplot2** and then go through first some introductory and then more advanced examples to give you some exposure to the **ggplot2** style of coding.  
 
-We will spend some time preparing data for graphical display.  In **ggplot2** there is a strong relationship between the dataset you are working with and the graphics you make.  While you will see some code for data manipulation using packages **tidyr** and **dplyr**, we will not discuss it in much detail as the focus today is on creating graphics.
+We will spend some time preparing data for graphical display.  In **ggplot2** there is a strong relationship between the dataset you are working with and the graphics you make.  While you will see some code for data manipulation using packages **tidyr** and **dplyr**, we will not discuss it in detail as the focus today is on creating graphics.
 
 ## Online resources
 
@@ -34,11 +38,11 @@ There are many resources for **ggplot2** help online.  Once you get started maki
 
 - The active development of **ggplot2** is done on GitHub.  To report bugs or check for updates, see the GitHub repository: https://github.com/tidyverse/ggplot2.
 
-- In recent years, **ggplot2** has become easier to *extend* to make additional kinds of plots.  A webpage that tracks packages that extend **ggplot2** to make other kinds of plots is here: http://www.ggplot2-exts.org/gallery/
+- In recent years, **ggplot2** has become easier to *extend* to make additional kinds of plots.  A webpage that tracks packages that extend **ggplot2** to make other kinds of plots is here: https://exts.ggplot2.tidyverse.org/gallery/
 
 ## Loading the package
 
-The first thing we need to do is to load package **ggplot2**.  If you are not working on a computer with a current version of **ggplot2**, which is version 3.1.1, you will need to install it first.  
+The first thing we need to do is to load package **ggplot2**.  If you are not working on a computer with a current version of **ggplot2**, which is version 3.3.0, you will need to install it first.  
 
 Check if your package version is up-to-date with `packageVersion()`.
 
@@ -75,7 +79,7 @@ str(mtcars)
 
 ### Defining the dataset in `ggplot()`
 
-Let's start by diving right into the `ggplot()` function.  When building a plot, `ggplot()` is going to be the first line of code.
+Let's start by diving right into the `ggplot()` function.  When building a plot, `ggplot()` is going to be your first line of code.
 
 Defining the dataset is an important part of the `ggplot()` philosophy.  It allows us to refer to columns in the dataset directly by name.  A common mistake for new **ggplot2** users is to use dollar sign notation to refer to column names (e.g., `mtcars$mpg`); try to avoid this.  
 
@@ -99,13 +103,13 @@ ggplot(data = mtcars, aes(x = wt, y = mpg) )
 
 ### Adding a geom layer to make a plot
 
-In **ggplot2** if we are talking about different *geoms* we are talking about different types of plots.  There are different geom functions to define different kinds of plots, which we add as *layers* to our initial `ggplot()` call.  
+In **ggplot2** if we are talking about different *geoms* (i.e., *geometric objects*) we are talking about different types of plots.  Different geom functions is how we ask for a certain kind of plot.  We add these geom functions as *layers* to our initial `ggplot()` call.  
 
 #### Scatterplot
 
 We add layers by using whatever geom function we want along with the `+` sign.  In this case we are going to start by making a scatterplot of `mpg` vs `wt`, so we will add the `geom_point()` layer to our `ggplot()` call.
 
-It is standard coding practice to put new layers on new lines.  This makes the code more readable, which is important when a collaborator (such as future you) needs to understand what you did. Putting spaces in your code, much like you would while typing a sentence, also makes your code more readable.
+It is standard coding practice to put new layers on new lines.  This makes the code more readable, which is important when a collaborator (such as your future self) needs to understand what you did. Putting spaces in your code, much like you would while typing a sentence, also makes your code more readable.
 
 Here is a scatterplot we get using `geom_point()`.  The data are now plotted as points on the default background.
 
@@ -116,7 +120,7 @@ ggplot(data = mtcars, aes(x = wt, y = mpg) ) +
 
 #### Boxplot
 
-Now let's make boxplots of `mpg` for each level of the categorical variable `cyl`.  The x axis variables is usually going to be categorical when making boxplots, so we have to change `cyl` to categorical using `factor(cyl)` (remember that `cyl` is numeric in `mtcars`).
+Now let's make boxplots of `mpg` for each level of the categorical variable `cyl`.  The x axis variable is usually going to be categorical when making boxplots, so we have to change `cyl` to categorical using `factor(cyl)` (remember that `cyl` is numeric in `mtcars`).
 
 We again define the dataset and axis variables within `ggplot()`, but this time we add the boxplot geom, `geom_boxplot()`, instead of `geom_point()`.  
 
@@ -133,7 +137,9 @@ Assigning a variable from the dataset to an aesthetic is always done within the 
 
 Let's make our scatterplot again, but this time we will map a different color to points for cars in different cylinder categories.  We'll do this by mapping the `color` aesthetic to the `cyl` variable.  Again we will need to use `factor(cyl)` to indicate that `cyl` should be considered categorical instead of continuous.
 
-One of the convenient things about **ggplot2** is that we when map aesthetics to variables we get legends automatically.  When making quick exploratory graphics I always use the default colors that **ggplot2** chooses.  Later today we'll see that we can change these defaults by using some of the `scale_*()` functions.
+One of the convenient things about **ggplot2** is that we when map aesthetics to variables we get legends automatically.  When making quick exploratory graphics I always use the default colors that **ggplot2** chooses.  Later today we'll see that we can change these defaults by using some of the `scale_*()` functions, which is an important part of making a final version of a graph.
+
+You can see I've stopped writing out the `data` argument, since the dataset is always the first argument in `ggplot()`.
 
 ```{r}
 ggplot(mtcars, aes(x = wt, y = mpg, color = factor(cyl) ) ) +
@@ -144,7 +150,7 @@ ggplot(mtcars, aes(x = wt, y = mpg, color = factor(cyl) ) ) +
 
 In the plots we are making today we will be only mapping categorical variables to aesthetics.  You can map some aesthetics to continuous variables, though.  For example, heat maps and bubble plots are created by mapping the aesthetics `color` and `size`, respectively, to continuous variables.  
 
-Note that some aesthetics can never be used with continuous variables.  For example, `shape` and `linetype` can only be used with categorical variables as those aesthetics don't have a continuous nature.  You would get an error message if you attempted to use continuous variables with either of those.
+Note that some aesthetics can never be used with continuous variables.  For example, `shape` and `linetype` can only be used with categorical variables as those aesthetics don't have a continuous nature.  You will get an error message if you attempt to use continuous variables with either of those.
 
 To see how aesthetic mapping with a continuous variable works, we'll make a bubble plot by mapping the `size` aesthetic to the continuous variable `disp` in our scatterplot.  As always, the aesthetic mapping takes place inside `aes()`.
 
@@ -155,14 +161,14 @@ ggplot(mtcars, aes(x = wt, y = mpg, size = disp) ) +
 
 ### Adding more layers
 
-Not only can we add additional aesthetics, we can also add additional geoms to a plot by adding more layers.  This gives us a lot of freedom to make really informative graphics.  
+Not only can we add additional aesthetics to a plot, we can also add additional geoms to a plot by adding more layers.  This gives us a lot of freedom to make really informative graphics.  
 
-Let's add the data points on top of the boxplots we made by adding a `geom_point()` layer.  In addition, let's map `color` to the number of cylinders.  We put the aesthetic mapping in `ggplot()`, which causes both the boxplots and points to be colored by `cyl`.  This is called mapping an aesthetic *globally*, as it affects all layers in the plot.
+Let's add the data points on top of the boxplots we made by adding a `geom_point()` layer.  In addition, let's map `color` to the number of cylinders.  We put the aesthetic mapping in `ggplot()`, which causes both the boxplots and points to be colored by `cyl` and put into the legend.  This is called mapping an aesthetic *globally*, as it affects all layers in the plot.
 
-Notice that when we use `color` for plots such as boxplots, the `color` changes the outline color and not the color of the inside of the box.  We would use the `fill` aesthetic for changing the color of the inside of the boxes.
+Notice that when we use `color` for plots such as boxplots, the `color` changes the outline color and not the color of the inside of the box.  We need the `fill` aesthetic for changing the color of the inside of the boxes.
 
 ```{r}
-ggplot(mtcars, aes(x= factor(cyl), y = mpg, color = factor(cyl) ) ) +
+ggplot(mtcars, aes(x = factor(cyl), y = mpg, color = factor(cyl) ) ) +
 	geom_boxplot() +
 	geom_point()
 ```
@@ -203,7 +209,7 @@ ggplot(mtcars, aes(x = factor(cyl), y = mpg) ) +
 
 ### Edit the dataset to change the graphic
 
-This is a good place for us to talk a bit about the relationship between the dataset and the graphic.  In the philosophy behind **ggplot2**, the dataset and the graphic go hand in hand.  Making changes to the dataset is often the most straightforward way to make changes to the resulting graphic.  The answer to the common help forum question "How do I change the appearance of xxx in **ggplot2**?" is very often "Make changes to your dataset."  
+This is a good place for us to talk a bit about the relationship between the dataset and the graphic.  In the philosophy behind **ggplot2**, the dataset and the graphic go hand in hand.  Making changes to the dataset can be the most straightforward way to make changes to the resulting graphic.  The answer to the common help forum question "How do I change the appearance of xxx in **ggplot2**?" is very often "Make changes to your dataset."  
 
 In the example dataset we've been using, the two categorical variables we've used are considered numeric in the `mtcars` dataset so we've had to define them as factors every time we use them.  In addition, the levels of the `am` variable are not useful for discerning which color represents an automatic vs manual transmission and so that legend is particularly uninformative.  
 
@@ -230,25 +236,27 @@ We won't be working with colors when we switch from exploratory graphics to crea
 
 We change the default colors to the desired colors using the `values` argument.  New colors are assigned in the order of the factor variable levels that we mapped the aesthetic to.  The levels of the `numcyl` variable are ordered `4`, `6`, `8` and the levels of the `am` variable are `Auto`, `Manual`. See the `limits` argument for changing the order of the factor levels within the scale functions (we will not cover this today). 
 
-There is some nice information about available colors and color palettes at the Cookbook to R site, http://www.cookbook-r.com/Graphs/Colors_(ggplot2)/ and package **colorspace** overview, http://colorspace.r-forge.r-project.org/articles/hcl_palettes.html.
+There is some nice information about available colors and color palettes at the Cookbook to R site, http://www.cookbook-r.com/Graphs/Colors_(ggplot2)/ and package **colorspace** overview, http://colorspace.r-forge.r-project.org/articles/hcl_palettes.html.  You can set some nice default color schemes by using `scale_color_viridis_d()` instead of manually choosing colors.
 
-Let's change the fill colors to light green, sky blue, and pink using color names, and the point colors to a green and an orange using hexadecimal string names I pulled off the Cookbook to R link I gave above.
+Let's change the fill colors to light green, sky blue, and pink using color names, and the point colors to a green and an orange using hexadecimal string names I pulled out of the Cookbook to R link I gave above.  If you don't want to rely on the factor order for setting colors to each factor level you can give named color vectors, shown within `scale_color_manual()` below.
 
-Make sure you use the correct `scale_*()` function for the aesthetic you are using in your graphic.  If you map a variable to `fill`, `scale_color_manual()` won't change the `fill` colors.
+You'll see the colors change both within the graph and in the legend.
+
+**Important**: Make sure you use the correct `scale_*()` function for the aesthetic you are using in your graphic.  If you map a variable to `fill`, `scale_color_manual()` won't change the `fill` colors.
 
 ```{r}
 ggplot(mtcars, aes(x = numcyl, y = mpg) ) +
 	geom_boxplot(aes(fill = numcyl) ) +
 	geom_point(aes(color = am) ) +
 	scale_fill_manual(values = c("light green", "sky blue", "pink") ) +
-	scale_color_manual(values = c("#009E73", "#E69F00") )
+	scale_color_manual(values = c(Manual = "#009E73", Auto = "#E69F00") )
 ```
 
 ### Dot plot example
 
-There are many, many other geoms available in **ggplot2**, far too many to cover today.  Let's talk about a few of the ones we commonly use in data exploration before moving on.  
+There are many, many other geoms available in **ggplot2**, far too many to cover today.  Let's talk about a few of the ones we commonly use in data exploration.  
 
-One useful graphic not everyone has seen before is a dot plot.  Dot plots are essentially a type of histogram made using dots.  This is an alternative way to show the raw data values along with a boxplot (which shows summary statistics).
+One useful graphic not everyone has seen before is the dot plot.  Dot plots are essentially a type of histogram made using dots.  This is an alternative way to show the raw data values along with a boxplot (which shows summary statistics).
 
 Let's put a dot plot on top of our boxplot using `geom_dotplot()`.  Here we need to bin along the y axis, so this will look like a histogram turned on its side.  You always get a message about the `binwidth` for dot plots and histograms.  This is information about the plot, and does not indicate an error.  
 
@@ -284,14 +292,14 @@ ggplot(mtcars, aes(x = mpg) ) +
 
 By default, histograms and density plots are on different scales.  If we want both on the same plot we'd need to get both layers on the same scale, showing either counts or densities.  The `histogram` and `density` geoms compute count and density variables, among others, that we can use for this.  The variables computed by each geom are listed in the "Computed variables" section of the documentation.  Follow [this link](https://ggplot2.tidyverse.org/reference/geom_histogram.html#computed-variables) for the computed variables from `geom_histogram()`.
 
-We can map our `y` variable to one of these special variables via `stat()`.  As this involves aesthetic mapping, we have to do this inside `aes()`.  
+We can map our `y` variable to one of these special variables via `after_stat()`.  As this involves aesthetic mapping, we have to do this inside `aes()`.  
 
 Let's put the density curve on the scale of counts and try the plot again.
 
 ```{r, message = FALSE}
 ggplot(mtcars, aes(x = mpg) ) +
 	geom_histogram() + 
-	geom_density(aes(y = stat(count) ) )
+	geom_density(aes(y = after_stat(count) ) )
 ```
 
 ### Layer order
@@ -303,7 +311,7 @@ Here the density layer comes last so it is on top of the histogram.
 ```{r, message = FALSE}
 ggplot(mtcars, aes(x = mpg, fill = am) ) +
 	geom_histogram() + 
-	geom_density(aes(y = stat(count) ) )
+	geom_density(aes(y = after_stat(count) ) )
 ```
 
 But if we use the histogram layer last the histogram is plotted on top of the density plot.  
@@ -311,23 +319,23 @@ But if we use the histogram layer last the histogram is plotted on top of the de
 ```{r, message = FALSE}
 # Change the order of the geom layers
 ggplot(mtcars, aes(x = mpg, fill = am) ) +
-	geom_density(aes(y = stat(count) ) ) +
+	geom_density(aes(y = after_stat(count) ) ) +
 	geom_histogram()
 ```
 
-These filled graphics aren't a little difficult to read.  The graphic become slightly more useful if we allow the color of the fill to be more transparent in the density layer.  We control transparency using the `alpha` aesthetic.  We can set `alpha` to be between 0 and 1, with 0 being completely transparent and 1 completely opaque.  
+These filled graphics are a little difficult to read.  The graphic become slightly more useful if we allow the color of the fill to be more transparent in the density layer.  We control transparency using the `alpha` aesthetic.  We can set `alpha` to be between 0 and 1, with 0 being completely transparent and 1 completely opaque.  
 
 We will set `alpha` to a constant inside `geom_density()`.  Because we are not aesthetic mapping, we will do this outside of `aes()`.  You can map the `alpha` aesthetic to variables, although we won't do this today.
 
 ```{r, message = FALSE}
 ggplot(mtcars, aes(x = mpg, fill = am) ) +
 	geom_histogram() + 
-	geom_density(aes(y = stat(count) ), alpha = .5)
+	geom_density(aes(y = after_stat(count) ), alpha = .5)
 ```
 
 ### Bar graphs
 
-Bar graphs are closely related to histograms, but involve graphing counts of a categorical variable instead of binning a continuous variable.  You can map values other than counts to the bars using the `y` aesthetic, but `geom_bar()` defaults to counts.  See `geom_col()` for a bar chart but `y` to a variable instead of graphing the count per group.
+Bar graphs are closely related to histograms, but involve graphing counts of a categorical variable instead of binning a continuous variable.  You can map values other than counts to the bars using the `y` aesthetic, but `geom_bar()` defaults to counts.  See `geom_col()` for a bar chart mapping `y` to a variable instead of graphing the count per group.
 
 ```{r}
 ggplot(mtcars, aes(x = numcyl) ) +
@@ -349,6 +357,7 @@ ggplot(mtcars, aes(x = wt, y = mpg) ) +
 	geom_point() +
 	facet_wrap(~numcyl)
 ```
+If you wanted to facet by multiple variables you add them with a `+` sign.  For example, `facet_wrap(~am + numcyl)`.
 
 The three panes have the same x and y axis by default.  That behavior isn't always desirable, and one or both axes can be allowed to vary using the `scales` argument with `"free"`, `"free_x"`, or `"free_y"`.  Let's allow the x axis to vary among facet panels.
 
@@ -362,7 +371,7 @@ ggplot(mtcars, aes(x = wt, y = mpg) ) +
 
 The function `stat_summary()` can be used to add layers based on simple summary statistics.  To see how this works, let's add mean `mpg` by group to our boxplot/dot plot graphic as a large red square.  
 
-We have to define which axis we want the summary statistics for (here `mpg` is on the y axis, so we use `fun.y`) and which geom we want to use to plot the summary statistics.  In this case we'll use the `point` geom to add the means as points.  Notice that all aesthetics we use in `stat_summary()` are set to constants and not mapped to variables so we define them outside of `aes()`.
+Sine we are working with a categorical x axis, `stat_summary()` automatically summarizes the `y` variable when we define the function we want to summarize with in `fun`.  If `x` were continuous this would work differently.  In addition to defining the summary f unction we need to define the geom we want to use to plot the summary statistics.  In this case we'll use the `point` geom to add the means as points.  Notice that all aesthetics we use in `stat_summary()` are set to constants and not mapped to variables so they are defined outside of `aes()`.
 
 Summary information can also be added to a graphic by creating a summary dataset and then using that summary dataset when adding additional layers to a graphic.  I find this is often easier to do than to try to figure out how to do complicated summaries with `stat_summary()`.  We will see this approach later in the workshop.
 
@@ -370,7 +379,7 @@ I generally can't remember which numbers correspond to which shapes in R.  There
 
 ```{r, message = FALSE}
 ggplot(mtcars, aes(x = numcyl, y = mpg) ) +
-	geom_boxplot(aes(color = numcyl)) +
+	geom_boxplot( aes(color = numcyl) ) +
 	geom_dotplot(fill = "purple", binaxis = "y") +
 	stat_summary(fun.y = mean, geom = "point", size = 5, shape = 22, fill = "red")
 ```
@@ -379,12 +388,12 @@ ggplot(mtcars, aes(x = numcyl, y = mpg) ) +
 
 Along the same lines as summary statistics, it is straightforward to add regression lines to graphics using `geom_smooth()` or `stat_smooth()`.  Let's add linear regression lines to a scatter plot using `geom_smooth()`.  We have to set the `method` to `"lm"` to get regression lines.  The default method of `geom_smooth()` is a `"loess"` line, which can also be useful when exploring your data.  
 
-By default `geom_smooth()` calculates a confidence envelope around the line, which isn't usually reasonable when working on exploratory graphics.
+By default `geom_smooth()` calculates a confidence envelope around the line, which isn't usually reasonable when working on exploratory graphics.  We'll remove it using `se = FALSE`.
 
 ```{r}
 ggplot(mtcars, aes(x = wt, y = mpg) ) +
 	geom_point() + 
-	geom_smooth(method = "lm")
+	geom_smooth(method = "lm", se = FALSE)
 ```
 
 We can fit regression lines separately for each group by mapping an aesthetic such as `color` to a categorical variable.  We'll map `color` to `numcyl` to get a separate regression line for each cylinder category.  

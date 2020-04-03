@@ -1,0 +1,13 @@
+name: part3_joining_two_datasets
+title: part3_joining_two_datasets
+username:
+account: aosmith
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 2002220
+bundleId: 2928718
+url: https://aosmith.shinyapps.io/part3_joining_two_datasets/
+when: 1585249070.28144
+asMultiple: FALSE
+asStatic: FALSE
+ignoredFiles: part1_data_manipulation_basics.Rmd|part2_reshaping_data.Rmd|part3_joining_two_datasets.html
