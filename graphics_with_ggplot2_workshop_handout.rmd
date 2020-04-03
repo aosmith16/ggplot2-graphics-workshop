@@ -1,5 +1,7 @@
 ---
 geometry: margin=.5in, bottom=.5in
+title: "Graphics with ggplot2"
+author: "Ariel Muldoon"
 date:  April 2020
 output: 
  pdf_document:
@@ -14,7 +16,7 @@ library(knitr)
 opts_chunk$set(comment = NA, tidy = FALSE, dev = "pdf", fig.height = 3)
 ```
 
-# Graphics with ggplot2
+# Introduction
 
 ```{r hex, echo = FALSE, out.width = "100px"}
 knitr::include_graphics("hex_ggplot2.png")
