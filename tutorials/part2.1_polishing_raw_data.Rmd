@@ -1,289 +1,565 @@
 ---
-title: "Reshaping data"
+title: "Polishing a plot of raw data"
 output: 
   learnr::tutorial:
        progressive: TRUE
        allow_skip: TRUE
        ace_theme: "crimson_editor"
 runtime: shiny_prerendered
-description: "Using tidyr to reshape your data."
+description: "A first example of controlling plot appearance."
 ---
 
 ```{r setup, include = FALSE}
 library(learnr)
+library(ggplot2)
 library(tidyr)
 library(dplyr)
-library(babynames)
 knitr::opts_chunk$set(error = TRUE, exercise.eval = FALSE)
 
-# Objects used later
-toy1 = data.frame(indiv = rep(1:3, times = 2),
-                    trt = rep( c("a", "b"), each = 3),
-                    time1 = rnorm(n = 6),
-                    time2 = rnorm(n = 6),
-                    time3 = rnorm(n = 6) )
-
-toy1long = toy1 %>%
-     pivot_longer(cols = time1:time3,
-                  names_to = "time",
-                  values_to = "measurement")
-
-numbaby_76_17 = babynames %>%
-    filter( year %in% c(1976, 2017) ) %>%
-    group_by(year, sex) %>%
-    summarise(n = n() ) %>%
-    ungroup()
 ```
 
 ## Introduction
 
-In this tutorial you are going to learn about how to *reshape* datasets in R using functions from package **tidyr**.
+```{r hex, echo = FALSE, out.width = "100px"}
+knitr::include_graphics(path = "https://raw.githubusercontent.com/rstudio/hex-stickers/master/PNG/ggplot2.png")
+```
 
-This tutorial covers:    
-* Making a *wide* dataset long with `pivot_longer()`  
-* Making a *long* dataset wide with `pivot_wider()`  
-* Summarizing when reshaping  
+This is the second tutorial in a series of three.  It will take you through an example of making a "final" graphic in **ggplot2**. This is a graphic you might put in a presentation or manuscript.  Such graphics need look nicer than the basic exploratory graphics you make just for yourself like those in the first tutorial, and you will have to spend time tweaking the appearance of a graph until is is just right. The geoms used in this tutorial are ones that were covered in the first tutorial of these series. 
 
-The language on wide and long datasets may be new to you, and what this language means should become clear as you work through the tutorial.
+I'm not advocating this as any sort of ideal final graphic, as a lot of plotting depends on personal preference and, potentially, manuscript requirements.  Instead, this example of the plotting process is done to expose you to more **ggplot2** options.
 
 ###
  
-### Check package version 
+### Check package versions
 
-The current version of **tidy** in March 2020 is 1.0.2.  If doing this tutorial on your own version of R you need to make sure you have this version or newer.
+The current version of **ggplot2** in April 2020 is 3.3.0.  If doing this tutorial in your own version of R you need to make sure you have this version (or newer).  Plotting with **ggplot2** often means you will need to manipulate your data.  In this tutorial data manipulation is done with packages **tidyr** (v. 1.0.2)  and **dplyr** (v. 0.8.3).  
 
-You can use function `packageVersion()` to check for the currently installed version of a package.  If your package version is old, close this tutorial, reinstall the package using `install.packages("tidyr")`, and then start again.
+You can use function `packageVersion()` to check for the currently installed version of a package.  If your package version is old, close this tutorial, reinstall the package using, for example, `install.packages("ggplot2")`, and then start again.
 
 ```{r package-vers, exercise = TRUE}
+packageVersion("ggplot2")
 packageVersion("tidyr")
+packageVersion("dplyr")
 ```
 
-Once you have an up-to-date version of **tidyr**, load this package along with package **dplyr**.  You're ready to get started!
+Once you have an up-to-date version of **ggplot2**, load the package.  You're ready to get started!
 
-```{r tidyr, exercise = TRUE, message = FALSE, warning = FALSE}
+```{r ggplot2, exercise = TRUE, message = FALSE, warning = FALSE}
+library(ggplot2)
 library(tidyr)
 library(dplyr)
 ```
 
-## The dataset to reshape
+### The plotting dataset
 
-The dataset you will be using in reshaping exercises today is named `toy1`.  This dataset is in a *wide* format.  It has 6 rows and 5 columns.
+The dataset to be plotted is called `eggs`.  This dataset contains information on egg length and width for two bird species.  The goal is to create a graphic the displays a nice snapshot of what the raw data look like.
 
-* `indiv` are the 6 individuals that had measurements taken on them through time.  Individuals were not given unique names; i.e., individual `1` in treatment `a` is a separate individual from individual `1` in treatment `b`.  
+```{r egg}
+eggs = structure(list(id = c(198L, 199L, 200L, 201L, 202L, 203L, 204L, 
+                             205L, 206L, 207L, 208L, 209L, 210L, 211L, 
+                             212L, 224L, 225L, 226L, 227L, 228L, 229L, 
+                             230L, 231L, 232L, 233L, 234L, 235L, 236L, 237L, 238L), 
+                      length = c(23.1, 23.5, 24.1, 23.4, 23.2, 22.5, 21.9, 21.9,
+                                 25, 24.1, 22.2, 21.1, 22.7, 22, 24.1, 19.8, 22.1, 
+                                 21.5, 20.9, 22, 21, 22.3, 21, 20.3, 20.9, 22, 20, 
+                                 20.8, 21.2, 21), 
+                      width = c(16.4, 16.8, 17.1, 16.4, 16.8, 16.6, 16.1, 16.1, 
+                                16.9, 15.9, 16.3, 17.2, 16.1, 17, 17.3, 15, 16, 
+                                16.2, 15.7, 16.2, 15.5, 16, 15.9, 15.5, 
+                                15.9, 16, 15.7, 15.9, 16, 16), 
+                      species = structure(c(1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 
+                                            1L, 1L, 1L, 1L, 1L, 1L, 2L, 2L, 2L, 
+                                            2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L, 2L), 
+                                          .Label = c("Pied Wagtail", "Reed-wren"), class = "factor") ), 
+                 class = "data.frame", row.names = c(NA, -30L) )
+```
 
-* `trt` are two different treatments that individuals were assigned to.  
+###
 
-* Columns `time1`, `time2`, and `time3` contain some quantitative measurement that was measured on the individuals at three different times.
+Take a quick look at the first six lines (with `head()`) and structure (with `str()`) of this dataset so you understand what it looks like.  The goal will be to plot the continuous variables `length` and `width` for each of the two `species`.  The `id` variable identifies individual eggs.
 
-Note that this dataset has 18 pieces of quantitative information (6 rows * 3 columns).
+```{r head-egg, exercise = TRUE}
+head(eggs)
+```
 
-```{r toy1}
-toy1
+```{r str-egg, exercise = TRUE}
+str(eggs)
+```
+
+### Reshape the dataset before plotting
+
+I'm going to use first person voice here to talk about how I thought about the plot as I made it.
+
+I knew I wanted to make a single plot that contained both `length` and `width` for each species using facets.  Plotting data from two different columns as facets won't work with **ggplot2**.  As is often the case when plotting data from multiple columns, I needed to reshape the dataset into a long format in order to use it.   
+
+This can be done with the **tidyr** function `pivot_longer()`.  If you are interested in learning to reshape you can see a tutorial on reshaping [here](https://ariel.rbind.io/workshop/datamanip/#interactive-tutorials) or go through the **tidyr** vignette.
+
+```{r long}
+eggs2 = pivot_longer(eggs, cols = c(length, width),
+                     names_to = "type", 
+                     values_to = "measurement",
+                     names_ptypes = list(type = factor() ) )
+```
+
+You can see the code and the top six lines of the new plotting dataset called `eggs2` below.  Now there is a categorical variable `type` that represents the *type* of measurement (length or width) as well as a single continuous variable `measurement` for plotting.  The `type` variable is converted to a factor.
+
+```{r longhead}
+head(eggs2)
+```
+
+## Initial plot to build on
+
+The goal of this tutorial is to show how a **ggplot2** is built one layer at a time.  First I will create and name a basic graphic by defining the dataset and the x and y axes in `ggplot()` and adding a geom layer.  I will name this graphical object `g1` and print it to show what it looks like.  
+
+Throughout the rest of the tutorial I will add layers to `g1`, naming the resulting plot `g1`, and print it.  That way you can focus on how the added layer affects the plot.  This coding style is not uncommon, and you may see it on help forums and in the documentation examples.
+
+My initial plot is a simple boxplot, with `species` on the x axis and `measurement` on the y axis. 
+
+```{r plot1, exercise = TRUE}
+g1 = ggplot(eggs2, aes(x = species, y = measurement) ) +
+      geom_boxplot()
+g1
+```
+
+## Add facets for groups
+
+Since I want to make one plot for `length` and one for `width` I'll add faceting by `type` to the graphic `g1`.
+
+```{r plot2-setup, echo = FALSE}
+g1 = ggplot(eggs2, aes(x = species, y = measurement) ) +
+      geom_boxplot()
+```
+
+```{r plot2, exercise = TRUE, exercise.setup = "plot2-setup"}
+g1 + 
+    facet_wrap(~type)
+```
+
+Not surprisingly, `length` and `width` cover fairly different ranges.  It makes sense to allow the y axis to have different limits for the two different panes, which I do with the `scales` argument.  The x axis is the same for each pane, though, so I don't need to allow that to vary.
+
+```{r plot2-2, exercise = TRUE, exercise.setup = "plot2-setup"}
+g1 = g1 +
+    facet_wrap(~type, scales = "free_y")
+g1
+```
+
+## Add dot plot layer
+
+Adding the raw data on top of the boxplot as a dot plot will give a more complete picture of what the distribution of these data looks like.  I use `stackdir = "center"` to make a centered dot plot, which is a little bit like a violin plot and a histogram.
+
+```{r plot3-setup, echo = FALSE}
+g1 = ggplot(eggs2, aes(x = species, y = measurement)) +
+    geom_boxplot() +
+    facet_wrap(~type, scales = "free_y")
+``` 
+
+```{r plot3, exercise = TRUE, exercise.setup = "plot3-setup"}
+g1 + 
+    geom_dotplot(binaxis = "y", stackdir = "center")
 ```
 
 ###
 
 ###
 
-The `toy1` example shows one common approach for storing time series data.  However, in many analyses in R you would not want to have the measurements from three different time periods stored in three different columns.  Instead, you would want to have a single column that contained all the quantitative measurements as well as a column that contained the information on the time of measurement: you would need to *reshape* the data prior to analysis.
+I thought the black dots were too dark, and decided to change the color to a lighter gray.  Color choice is often a lot of trial and error for me, which I'm not going to show you here.  I settled on a gray color called `grey64`.  I set both `fill` and `color` aesthetics to constants, so these go outside of `aes`.
 
-In this case, reshaping the dataset involves taking a *wide* dataset, where data are stored in multiple columns, and making it *long*, where the same data are stored in multiple rows.  You can use the `pivot_longer()` function to *lengthen* a dataset from wide to long.
-
-## Wide to long with `pivot_longer()`
-
-The **tidyr** package was built to be used with pipes, and so the dataset to reshape is the first argument for its functions. Review tutorial 1 if you are not familiar with pipes yet.
-
-After defining the dataset you want to reshape in `pivot_longer()` you list the columns that contain the values you want to be combined into a single column using the `cols` argument.  The three columns to combine in the example dataset are `time1`, `time2`, and `time3`.
-
-###
-
-###
-
-You can use the `select_helpers` you learned in tutorial 1 to select the columns.  For example, any of the following code examples can be used to select the three `time` columns:  
-`cols = time1:time3`  
-`cols = starts_with("time")`  
-`cols = c(-indiv, -trt)`
-
-###
-
-In addition to selecting the columns to combine you will need to choose a name for the new "grouping" column in the long dataset using `names_to`.  This column will be a categorical variables that contains the names of the columns you are combining.  When naming a column like this you need to use a *string*, meaning the name you choose needs to be given in quotes.
-
-Finally, you need to name the new column of values using `values_to`.  This is also done using a string.
-
-In this example, the new grouping column is named `time` and the new values column is named `measurement`.  The output is named `toy1long`.
-
-```{r long1, exercise = TRUE}
-toy1long = toy1 %>%
-     pivot_longer(cols = time1:time3,
-                  names_to = "time",
-                  values_to = "measurement")
-toy1long
+```{r plot3-2, exercise = TRUE, exercise.setup = "plot3-setup"}
+g1 = g1 + 
+    geom_dotplot(binaxis = "y", stackdir = "center",
+                 color = "grey64", fill = "grey64")
+g1
 ```
 
-The `toy1long` dataset is in *long* format, which has the same amount information as in the original.  It contains 18 quantitative values, now stored in a single column.  You changed the shape of the dataset, not the underlying data.
+## Add the group means
 
-## Long to wide with `pivot_wider()`
+Boxplots show medians but not means.  It can be nice to add the means, especially if the statistical test used to analyze these data involve differences in means.  I add the mean value for each `species` and `type` as diamonds, and fill them with a darker gray color, `grey24`.  I didn't like how small these points were at first, so I increased the size of the diamonds, as well.
 
-Now you can use the function `pivot_wider()` to *widen* the long dataset `toy1long` back to its original format.  You might want to do this if, for example, you were going to take a dataset from an analysis done in R to graph in a program like SigmaPlot.
-
-###
-
-###
-
-In the `pivot_wider()` function, you use the pair of arguments `names_from` and `values_from` after defining the dataset you want to reshape.  
-
-The `names_from` argument is where you list the column that contains the values you will use as the new column names.  You are referring to an existing column, so this can be done with *bare* names (i.e., without quotes around the variable names).
-
-You list the column that contains the values to fill the new columns with using `values_from`.   
-
-```{r wide1, exercise = TRUE}
-toy1long %>%
-     pivot_wider(names_from = time,
-                 values_from = measurement)
+```{r plot4-setup, echo = FALSE, message = FALSE}
+g1 = ggplot(eggs2, aes(x = species, y = measurement)) +
+    geom_boxplot() +
+    facet_wrap(~type, scales = "free_y") +
+    geom_dotplot(binaxis = "y", stackdir = "center",
+                 color = "grey64", fill = "grey64")
 ```
 
-## Multiple `names_from` columns
-
-In some cases you'll want to make a wide dataset with new column names based on multiple variables from the long dataset.  In that case you can pass multiple variable names to `names_from`.
-
-By default, the new column names will have an underscore (`_`) in them separating the information from the two variables.  The new column names are based on the order the variables are listed in `names_from`.
-
-Here is an example, using both `trt` and `time` as the `names_from` variables.
-
-```{r extrawide2, exercise = TRUE}
-toy1long %>%
-	pivot_wider(names_from = c(trt, time),
-	            values_from = measurement)
+```{r plot4, message = FALSE, exercise = TRUE, exercise.setup = "plot4-setup"}
+g1 = g1 + 
+    stat_summary(fun = mean, geom = "point",
+                 shape = 18, size = 5, color = "grey24")
+g1
 ```
 
-The result is 3 row dataset with quantitative values stored in 6 columns: it still has the original 18 pieces of information that are now stored in an extra-wide format.
+## Choose a new theme
 
-###
+So far this work is mostly a review of topics from the first tutorial.  I'm now going to start to focus on the overall appearance of the graphic, particularly the appearance of the panels and axes.  You may not have seen before.
 
-###
+The default appearance of **ggplot2** graphics is called `theme_gray()`.  The default gray background of **ggplot2** can be nice for seeing differences in colors, but is not as useful if printing in black and white.  If I'm going to include something in a printed document, I often use the built-in theme `theme_bw()` to quickly change the overall appearance of the plot.  This theme is called "theme black-and-white".  You also might be interested in the built-in themes, e.g., `theme_minimal()` or `theme_classic()`, which are a more standard plot format in some fields.  There are many themes out there - check out package **ggthemes** for more options. 
 
-You can change the symbol used in the new column names with `names_sep`.  In the code below, the `names_from` columns are listed in a different order.
+While I could change all elements of the panel manually in `theme()`, which you'll see next, I find `theme_bw()` gives a nice starting point for further changes.  Although the result isn't actually black and white, as the grid lines and axis tick labels are still gray, you can see this changes the panel background to white. 
 
-```{r extrawide3, exercise = TRUE}
-toy1long %>%
-	pivot_wider(names_from = c(time, trt),
-	            values_from = measurement,
-	            names_sep = ".")
+```{r plot5-setup, echo = FALSE, message = FALSE}
+g1 = ggplot(eggs2, aes(x = species, y = measurement)) +
+    geom_boxplot() +
+    facet_wrap(~type, scales = "free_y") +
+    geom_dotplot(binaxis = "y", stackdir = "center",
+                 color = "grey64", fill = "grey64") + 
+    stat_summary(fun = mean, geom = "point",
+                 shape = 18, size = 5, color = "grey24")
 ```
 
-You can also list multiple `values_from` columns to put two widen two different sets of values simultaneously.  This is not covered in this tutorial, but see the `usrentincome` example in the `Examples` section of the help page at `?pivot_wider()`.
-
-## Non-unique row identifiers
-
-If the rows of the long dataset aren't uniquely identified when converting into a wide format you will get a warning message from `pivot_wider()`.
-
-For example, if you were trying to spread `toy1long` but you only had the `trt` variable and not the `indiv` variable the rows wouldn't be uniquely identified.  It is only the combination of `trt`, `indiv`, and `time` that uniquely identifies a row.
-
-In this exercise, `indiv` will be removed from the dataset using `select()` from package **dplyr**.
-
-```{r notunique}
-toy1long %>%
-       select(-indiv)
-```
-
-###  
-
-###
-
-You now have multiple observations of each time for each `trt` category; the rows are not uniquely identified.  Take a look at what happens when you use `pivot_wider()` on this dataset without changing the previous code.  
-
-In particular, take a look at the warning messages.  These messages contain useful information about what is in the output and why.  The output dataset looks pretty different than what you've seen before because all 3 values for each `trt` and `time` were kept but were placed into lists.
-
-```{r notunique2, exercise = TRUE, exercise.setup = "long1"}
-toy1long %>%
-       select(-indiv) %>% 
-       pivot_wider(names_from = time, 
-                   values_from = measurement)
-```
-
-###
-
-If you really want to widen the dataset without `indiv`, you most likely want to summarize over the values for each `trt` and `time`.  This can be done using the `values_fun` argument.   This is what the message
-
-> Use `values_fn = list(measurement = summary_fun)` to summarise duplicates
-
-was telling you.
-
-For example, you can calculate the mean of the values in each `trt` and `time` using `values_fn` with `list(measurement = mean)`.
-
-```{r notunique3, exercise = TRUE, exercise.setup = "long1"}
-toy1long %>%
-       select(-indiv) %>% 
-       pivot_wider(names_from = time, 
-                   values_from = measurement,
-                   values_fn = list(measurement = mean) )
-```
-
-When you summarize over multiple values you *do* change the total number of values in the dataset.  The output now has only 6 quantitative values.
-
-## Practice reshaping
-
-Time for some practice!
-
-This practice will be based on a dataset named `numbaby_76_17`.  This dataset is one you learned to make in tutorial 1.  It is in a long format, with the total number of baby names for each `year` and `sex` listed in a single column called `n`.
-
-```{r baby}
-numbaby_76_17
+```{r plot5, message = FALSE, exercise = TRUE, exercise.setup = "plot5-setup"}
+g1 + 
+    theme_bw()
 ```
 
 ###
 
 ###
 
-Reshape the `numbaby_76_17` dataset to a wide format.  Make a dataset with a separate column for each `sex` containing the number of baby names in a given `year`.  
+The default text size in **ggplot2** themes is often too small for graphs that will be in a presentation or publication.  I can make all the text bigger by changing the `base_size` in the overall `theme_*()` function.  I have used `18` for presentations before; here I'll use `16` (the default is `11`).
 
-```{r prac1, exercise = TRUE}
-numbaby_76_17 %>%
-     pivot_wider()
+Note that the size of the text heavily depends on the size you save your final plot at.  The plots printed in this tutorial default to 6.5 inches x 4 inches, so I may need to tweak things more once I settle on a final plot size when saving.
+
+```{r plot5-2, message = FALSE, exercise = TRUE, exercise.setup = "plot5-setup"}
+g1 = g1 + 
+    theme_bw(base_size = 16)
+g1
 ```
 
-```{r prac1-solution}
-numbaby_76_17 %>%
-    pivot_wider(names_from = sex, 
-                values_from = n)
+## Changing more plot elements
+
+Having grid lines along the y axis is useful for reading the graph, but grid lines along a categorical axis like the x axis seem unnecessary.  Control of panel elements, including the removal of grid lines, can be done in `theme()`.  See the help page for `theme()` via `?theme` for the many, many elements of the graphic that you can change.
+
+Because I only wanted to remove the grid lines on the x axis I used the `panel.grid.major.x` argument set to `element_blank()` within `theme()`.
+
+```{r plot6-setup, echo = FALSE, message = FALSE}
+g1 = ggplot(eggs2, aes(x = species, y = measurement)) +
+    geom_boxplot() +
+    facet_wrap(~type, scales = "free_y") +
+    geom_dotplot(binaxis = "y", stackdir = "center",
+                 color = "grey64", fill = "grey64") + 
+    stat_summary(fun = mean, geom = "point",
+                 shape = 18, size = 5, color = "grey24") + 
+    theme_bw(base_size = 16)
 ```
 
-###
-
-Now reshape the same dataset to different wide format.  Make a dataset with a separate column for each `year` containing the number of baby names in a given `sex`.
-
-```{r prac2, exercise = TRUE}
-numbaby_76_17 %>%
-     pivot_wider()
-```
-
-```{r prac2-solution}
-numbaby_76_17 %>%
-    pivot_wider(names_from = year, 
-                values_from = n)
-```
-
-###
-
-Finally, practice putting the wide dataset with a separate column for each `sex` back into its original format.  Name the single quantitative column `num_name`.
-
-This can involve assigning a name when creating the wide dataset or using `pivot_longer()` after `pivot_wider()`.
-
-```{r prac3, exercise = TRUE}
-numbaby_76_17 %>%
-     pivot_wider() %>%
-     pivot_longer()
-```
-
-```{r prac3-solution}
-numbaby_76_17 %>%
-    pivot_wider(names_from = sex, 
-                values_from = n) %>%
-    pivot_longer(cols = F:M,
-                 names_to = "sex", 
-                 values_to = "num_name")
+```{r plot6, message = FALSE, exercise = TRUE, exercise.setup = "plot6-setup"}
+g1 + 
+    theme(panel.grid.major.x = element_blank() )
 ```
 
 ###
 
-This is the end of the reshaping tutorial.  The final tutorial in this series is about *joining* two datasets together.
+###
+
+Since I was already working in `theme()`, I decide to make changes to appearance of the *strips* of the facets.  The strips are where the panel labels are.  
+
+You can change the color of the background (or remove it all together by setting it to `element_blank()`) with `strip.background` and adjust the text placement and size with `strip.text`.  Note you cannot actually change the labels in `strip.text`, only adjust the text appearance.  In this case I left justify the text, make it `bold`, and change the `size`.
+
+```{r plot6-2, message = FALSE, exercise = TRUE, exercise.setup = "plot6-setup"}
+g1 = g1 + 
+    theme(panel.grid.major.x = element_blank(),
+          strip.background = element_blank(),
+          strip.text = element_text(hjust = 0,
+                                    face = "bold", size = 14) )
+g1
+```
+
+## Changing facet labels
+
+At this point I realized I'd made an error.  Changing the text in the facet strips is something that takes a little work, although it can be done via the `labeller` argument in `facet_wrap()`.  However, this is a case where changing the dataset is actually a fairly straightforward way to change the plot.  I should have changed the levels of the variable `type` in the dataset to begin with to make them nicer.  I'll do that now by assigning new `levels` to the `type` variable.
+
+You can see the original levels and the new levels printed once you run the code below.
+
+```{r factorlabels, exercise = TRUE}
+# Original levels
+levels(eggs2$type)
+# Change the levels
+levels(eggs2$type) = c("Egg length", "Egg width")
+levels(eggs2$type)
+```
+
+###
+
+### Creating the same plot using a different or edited dataset
+
+Does this mean I have to rerun all the code I've done so far?  I certainly could.  In a situation where I wasn't going through things one step at a time, running the code again would be a piece of cake.  
+
+There is another option, though: the `%+%` function.  This function allows you to recreate a graphic you've already made using a different dataset.  This can be convenient if you want to make identical plots from data in separate datasets.  
+
+Here I'll use the newly edited `eggs2` dataset with `g1` to recreate the graphic I've made so far with better facet labels.
+
+```{r plot7-setup, echo = FALSE, message = FALSE}
+g1 = ggplot(eggs2, aes(x = species, y = measurement)) +
+    geom_boxplot() +
+    facet_wrap(~type, scales = "free_y") +
+    geom_dotplot(binaxis = "y", stackdir = "center",
+                 color = "grey64", fill = "grey64") + 
+    stat_summary(fun = mean, geom = "point",
+                 shape = 18, size = 5, color = "grey24") + 
+    theme_bw(base_size = 16) + 
+    theme(panel.grid.major.x = element_blank(),
+          strip.background = element_blank(),
+          strip.text = element_text(hjust = 0,
+                                    face = "bold", size = 14) )
+levels(eggs2$type) = c("Egg length", "Egg width")
+```
+
+```{r plot7, message = FALSE, exercise = TRUE, exercise.setup = "plot7-setup"}
+g1 = g1 %+% eggs2
+g1
+```
+
+## Changing the axis labels
+
+The last appearance change I felt I really needed is to fix up the axis labels.   
+
+Axis and other labels and titles can be changed in `labs()`.  I decided to suppress the x axis label because it seemed unnecessary.  By using `NULL` instead of `""` I removed all of the space between the tick labels and the bottom of the plot.  The label on the y axis needed cleaning up, with capitalization and the units of measurement added.
+
+```{r plot8-setup, echo = FALSE, message = FALSE}
+levels(eggs2$type) = c("Egg length", "Egg width")
+loc = eggs2 %>% 
+    group_by(type) %>%
+    summarise(yloc = min(measurement) - .5)
+sumdat = eggs2 %>%
+    group_by(type, species) %>%
+    summarise(Mean = round(mean(measurement), 1),
+                  SD = round(sd(measurement), 1) ) %>%
+    mutate(label = paste0("Mean=", Mean, " mm",
+                                       "\n", 
+                                       "SD=", SD," mm") ) %>%
+    inner_join(loc, by = "type")
+g1 = ggplot(eggs2, aes(x = species, y = measurement)) +
+    geom_boxplot() +
+    facet_wrap(~type, scales = "free_y") +
+    geom_dotplot(binaxis = "y", stackdir = "center",
+                 color = "grey64", fill = "grey64") + 
+    stat_summary(fun = mean, geom = "point",
+                 shape = 18, size = 5, color = "grey24") + 
+    theme_bw(base_size = 16) + 
+    theme(panel.grid.major.x = element_blank(),
+          strip.background = element_blank(),
+          strip.text = element_text(hjust = 0,
+                                    face = "bold", size = 14) )
+```
+
+```{r plot8, message = FALSE, exercise = TRUE, exercise.setup = "plot8-setup"}
+g1 = g1 + 
+    labs(x = NULL,
+         y = "Measurement (mm)")
+g1
+```
+
+
+## Adding summary statistics as text
+
+I could have stopped here and had a perfectly nice graphic.  However, I like adding additional information to graphics so I decided to add summary statistics as text to my plot.  
+
+To do this, I had to calculate the summary statistics I wanted and figure out where to place them along the x and y axes.  Then I can add this information to the plot as *labels* with `geom_text()`.  
+
+This whole process is done using data manipulation functions from package **dplyr**.  I will not cover this code in detail since it's outside the scope of a **ggplot2** tutorial, but you can see that knowing data manipulation techniques can be important for plotting.  If you don't know data manipulation in R very well, this may seem like a huge amount of work in order to get what you want.  I am showing you this to drive the point home that working with a dataset outside of **ggplot2** is often required in order to take full advantage of the strengths of this package.  
+
+###
+
+Since I'm going to add the mean and standard deviation of each `type` of egg measurement for each `species` as text in the graphic, I first calculated these for each group.  
+
+```{r summary1, eval = FALSE}
+# Summary stats be group
+sumdat = eggs2 %>% 
+        group_by(type, species) %>%
+        summarise(Mean = round(mean(measurement), 1),
+                  SD = round(sd(measurement), 1) )
+```
+
+###
+
+Then I made a column of labels using the summary statistics I calculated along with some titles using `paste0()`.  I put a line break between the means and the standard deviations with `\n`.
+
+```{r summary2, eval = FALSE}
+# Create label with units and line break
+sumdat = mutate(sumdat, label = paste0("Mean=", Mean, " mm",
+                                       "\n", 
+                                       "SD=", SD," mm") )
+```
+
+###
+
+Finally, I had to figure out where to place the summary statistics beneath the boxplot.  Using some trial and error (not shown), I chose the minimum `measurement` value minus 0.5 and added this to the summary dataset.  I'll use `species`, already present in the dataset, as the x axis location.
+
+```{r summary3, eval = FALSE}
+# Calculate y axis location by type
+loc = eggs2 %>% 
+      group_by(type) %>%
+      summarise(yloc = min(measurement) - .5)
+# Add location to summary dataset
+sumdat = inner_join(sumdat, loc, by = "type")
+```
+
+This is what this dataset looks like.  It's ready to be used for plotting.
+
+```{r sumfin, exercise = TRUE, exercise.setup = "plot8-setup"}
+sumdat
+```
+
+### Using a new dataset in a layer
+
+Now I'm finally ready to add the text to my plot using `geom_text()`.  For the first time I'll be defining a new dataset for plotting within a specific geom layer.  Defining a new dataset in a geom will override the global dataset for the graphic that you defined in `ggplot()`.  The other geom layers will still plot information from the dataset `eggs2`, but `geom_text()` will plot what is in the `sumdat` dataset.  
+
+###
+
+When defining a dataset within a layer it is safest to type out the `data` argument, as the dataset is not the first argument in the geom layers like it is in `ggplot()`.
+
+Notice I set the y position for `geom_text()` in `aes()` because I'm using a different y variable for this layer.  I map the y axis position to `yloc`.  
+
+The `geom_text()` geom requires you to define a `label` variable within `aes()`.  The help files for individual geoms will tell you if there are required aesthetics, which you should check for when using a geom for the first time.  I will map the variable `label` to the `label` aesthetic.
+
+```{r plot9-setup, echo = FALSE, message = FALSE}
+levels(eggs2$type) = c("Egg length", "Egg width")
+loc = eggs2 %>% 
+    group_by(type) %>%
+    summarise(yloc = min(measurement) - .5)
+sumdat = eggs2 %>%
+    group_by(type, species) %>%
+    summarise(Mean = round(mean(measurement), 1),
+                  SD = round(sd(measurement), 1) ) %>%
+    mutate(label = paste0("Mean=", Mean, " mm",
+                                       "\n", 
+                                       "SD=", SD," mm") ) %>%
+    inner_join(loc, by = "type")
+g1 = ggplot(eggs2, aes(x = species, y = measurement)) +
+    geom_boxplot() +
+    facet_wrap(~type, scales = "free_y") +
+    geom_dotplot(binaxis = "y", stackdir = "center",
+                 color = "grey64", fill = "grey64") + 
+    stat_summary(fun = mean, geom = "point",
+                 shape = 18, size = 5, color = "grey24") + 
+    theme_bw(base_size = 16) + 
+    theme(panel.grid.major.x = element_blank(),
+          strip.background = element_blank(),
+          strip.text = element_text(hjust = 0,
+                                    face = "bold", 
+                                    size = 14) ) +
+    labs(x = NULL,
+         y = "Measurement (mm)")
+```
+
+```{r plot9, message = FALSE, exercise = TRUE, exercise.setup = "plot9-setup"}
+g1 + 
+    geom_text(data = sumdat, aes(label = label, y = yloc) )
+```
+
+As often happens, my first attempt at plotting needs some adjustments.  I adjusted the line height, changed the vertical justification, and changed the size of the text within `geom_text()` so things fit a little better at the current plot size.
+
+```{r plot9-2, message = FALSE, exercise = TRUE, exercise.setup = "plot9-setup"}
+g1 = g1 + 
+    geom_text(data = sumdat, aes(label = label, y = yloc),
+              lineheight = .9, vjust = .3, size = 4)
+g1
+```
+
+## The final plot code
+
+This is what the final plot code looks like all together.
+
+```{r finalcode, eval = FALSE}
+g1 = ggplot(eggs2, aes(x = species, y = measurement) ) +
+ 	geom_boxplot() + 
+	facet_wrap(~type, scales = "free_y") +
+	geom_dotplot(binaxis = "y", stackdir = "center",
+	             color = "grey64", fill = "grey64") +
+	stat_summary(fun.y = mean, geom = "point", shape = 18,
+	             size = 5, color = "grey24") +
+	theme_bw(base_size = 16) + 
+	theme(panel.grid.major.x = element_blank(),
+	      strip.background = element_blank(),
+	      strip.text = element_text(hjust = 0, 
+	                                face = "bold", 
+	                                size = 14) ) +
+ 	labs(x = NULL,
+ 	     y = "Measurement (mm)") +
+	geom_text(data = sumdat, aes(label = label, y = yloc),
+	          lineheight = .9, vjust = .3, size = 4)
+```
+
+In making this graph, I relied a lot on the graphic displayed in the plotting window in RStudio to help decide on spacing and point sizes and such.  Be careful using this method.  Nowhere did I actually set the plotting window size.  In fact, you can't set the RStudio plotting window to a specific size at this time.  Depending on the size and shape you save a graphic as, you may decide you need to make a few more adjustments.  
+
+One way to check how things will look at different sizes is to preview the plot at difference sizes using the `Export` drop down menu in the RStudio **Plots** pane.  You can also save the graphic to your desired size and take a look at it.
+
+## Saving a plot with ggsave()
+
+The function `ggsave()` is useful for saving plots made with **ggplot2**.  You can save graphics in all kinds of formats, but the code below shows what the code looks like to save the graphic as a PDF and as a PNG file.  The sizes I chose are arbitrary, and are done to demonstrate some of the `ggsave()` options.  
+
+By default `ggsave()` saves the last plot made to whatever size your plot window is.  You can set the graphic size via `width` and `height`.
+
+It can be safer to define the graphic you want saved by name using the `plot` argument, as shown in the second example. If you want the plot to look like it does in the plotting window, leave `height` and `width` at their default values. 
+
+This code is not run.
+
+```{r saving, eval = FALSE}
+ggsave("final plot 1.pdf", width = 7, height = 7) # setting width and height (default inches)
+ggsave("final plot 1.png", plot = g1) # using default size based on plotting window
+```
+
+###
+
+### Final tweaks
+
+At this point I decided that the dot size was too big.  I edited the `geom_dotplot()` argument `dotsize` and then re-saved the final plot at a final size: 9 inches wide and 8 inches high. The plot at this size is shown when you run the code (it may be cut off on the right if you are working on a very small screen).
+
+```{r finally-setup, echo = FALSE, message = FALSE}
+levels(eggs2$type) = c("Egg length", "Egg width")
+loc = eggs2 %>% 
+    group_by(type) %>%
+    summarise(yloc = min(measurement) - .5)
+sumdat = eggs2 %>%
+    group_by(type, species) %>%
+    summarise(Mean = round(mean(measurement), 1),
+                  SD = round(sd(measurement), 1) ) %>%
+    mutate(label = paste0("Mean=", Mean, " mm",
+                                       "\n", 
+                                       "SD=", SD," mm") ) %>%
+    inner_join(loc, by = "type")
+g1 = ggplot(eggs2, aes(x = species, y = measurement)) +
+    geom_boxplot() +
+    facet_wrap(~type, scales = "free_y") +
+    geom_dotplot(binaxis = "y", stackdir = "center",
+                 color = "grey64", fill = "grey64") + 
+    stat_summary(fun = mean, geom = "point",
+                 shape = 18, size = 5, color = "grey24") + 
+    theme_bw(base_size = 16) + 
+    theme(panel.grid.major.x = element_blank(),
+          strip.background = element_blank(),
+          strip.text = element_text(hjust = 0,
+                                    face = "bold", 
+                                    size = 14) ) +
+    labs(x = NULL,
+         y = "Measurement (mm)") + 
+    geom_text(data = sumdat, aes(label = label, y = yloc),
+              lineheight = .9, vjust = .3, size = 4)
+```
+
+```{r finally, exercise = TRUE, exercise.setup = "finally-setup", message = FALSE, fig.height = 8, fig.width = 9}
+g1 = ggplot(eggs2, aes(x = species, y = measurement) ) +
+ 	geom_boxplot() + 
+	facet_wrap(~type, scales = "free_y") +
+	geom_dotplot(binaxis = "y", stackdir = "center",
+	             color = "grey64", fill = "grey64", dotsize = .5) +
+	stat_summary(fun = mean, geom = "point", shape = 18,
+	             size = 5, color = "grey24") +
+	theme_bw(base_size = 16) + 
+	theme(panel.grid.major.x = element_blank(),
+	      strip.background = element_blank(),
+	      strip.text = element_text(hjust = 0, 
+	                                face = "bold", 
+	                                size = 14) ) +
+ 	labs(x = NULL,
+ 	     y = "Measurement (mm)") +
+	geom_text(data = sumdat, aes(label = label, y = yloc),
+	          lineheight = .9, vjust = .3, size = 4)
+g1
+```
+
+###
+
+This ends the second tutorial in the **ggplot2** workshop series.  The last tutorial also goes through polishing a graphic, this time plotting a dataset of results using means and error bars.  The last tutorial also demonstrates working on changing the placement and appearance of the legend of a plot.

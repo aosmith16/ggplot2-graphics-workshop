@@ -383,7 +383,7 @@ I generally can't remember which numbers correspond to which shapes in R.  There
 ggplot(mtcars, aes(x = numcyl, y = mpg) ) +
 	geom_boxplot( aes(color = numcyl) ) +
 	geom_dotplot(fill = "purple", binaxis = "y") +
-	stat_summary(fun.y = mean, geom = "point", size = 5, shape = 22, fill = "red")
+	stat_summary(fun = mean, geom = "point", size = 5, shape = 22, fill = "red")
 ```
 
 ### Adding regression lines
@@ -451,8 +451,10 @@ You can see the final graphic we are working towards below.
 ```{r finalgraph1, message = FALSE, warning = FALSE, fig.height = 8, fig.width = 9}
 library(tidyr)
 library(dplyr)
-eggs2 = gather(eggs, key = type, value = measurement,
-			length, width, factor_key = TRUE)
+eggs2 = pivot_longer(eggs, cols = c(length, width),
+                     names_to = "type", 
+                     values_to = "measurement",
+                     names_ptypes = list(type = factor() ) )
 levels(eggs2$type) = c("Egg length", "Egg width")
 sumdat = eggs2 %>% 
         group_by(type, species) %>%
@@ -462,19 +464,21 @@ loc = eggs2 %>%
       group_by(type) %>%
       summarise(yloc = min(measurement) - .5)
 sumdat = sumdat %>%
-    inner_join(loc) %>%
+    inner_join(loc, by = "type") %>%
     mutate(label = paste0("Mean=", Mean, " mm", "\n", "SD=", SD," mm") )
 ggplot(eggs2, aes(x = species, y = measurement) ) +
  	geom_boxplot() + 
 	facet_wrap(~type, scales = "free_y") +
 	geom_dotplot(binaxis = "y", stackdir = "center",
 	             color = "grey64", fill = "grey64", dotsize = .5) +
-	stat_summary(fun.y = mean, geom = "point", shape = 18,
+	stat_summary(fun = mean, geom = "point", shape = 18,
 	             size = 5, color = "grey24") +
 	theme_bw(base_size = 16) + 
 	theme(panel.grid.major.x = element_blank(),
 	      strip.background = element_blank(),
-	      strip.text = element_text(hjust = 0, face = "bold", size = 14) ) +
+	      strip.text = element_text(hjust = 0, 
+	                                face = "bold", 
+	                                size = 14) ) +
  	labs(x = NULL,
  	     y = "Measurement (mm)") +
 	geom_text(data = sumdat, aes(label = label, y = yloc),
@@ -538,7 +542,7 @@ I thought the black dots were too dark, and decided to change the color to a lig
 Boxplots show medians but not means.  It can be nice to add the means, especially when the statistical test used to analyze these data was about differences in means.  Let's add the mean value for each `species` and `type` as diamonds, and fill them with a darker gray color, `grey24`.  I didn't like how small these points were at first, so we'll increase the size of the diamonds, as well.
 
 ```{r, message = FALSE}
-( g1 = g1 + stat_summary(fun.y = mean, geom = "point",
+( g1 = g1 + stat_summary(fun = mean, geom = "point",
                          shape = 18, size = 5, color = "grey24") )
 ```
 
@@ -546,12 +550,12 @@ Boxplots show medians but not means.  It can be nice to add the means, especiall
 
 So far this is pretty much a review of things we did in the first part of the workshop.  Let's change our focus to the overall appearance of the graphic, particularly the appearance of the panels and axes.
 
-The default appearance of **ggplot2** graphics is called `theme_gray()`.  The default gray background of **ggplot2** can be nice for seeing differences in colors, but is not as useful if printing in black and white.  If I'm going to include something in a printed document, I often use the built-in theme `theme_bw` to change the overall appearance of the graphic.  This theme is called "theme black-and-white".  You also might be interested in the built-in theme `theme_minimal`, which is a standard format in some fields.  There are many themes out there - check out package **ggthemes** for more options. 
+The default appearance of **ggplot2** graphics is called `theme_gray()`.  The default gray background of **ggplot2** can be nice for seeing differences in colors, but is not as useful if printing in black and white.  If I'm going to include something in a printed document, I often use the built-in theme `theme_bw()` to change the overall appearance of the graphic.  This theme is called "theme black-and-white".  You also might be interested in the built-in themes `theme_minimal()` or `theme_classic()`, which are a standard plot format in some fields.  There are many themes out there - check out package **ggthemes** for more options. 
 
 While I could change all elements of the panel manually, I find `theme_bw()` gives a nice starting point for further changes.
 
 ```{r, message = FALSE}
-( g1 = g1 + theme_bw() )
+g1 + theme_bw()
 ```
 
 Although the result isn't actually black and white, as the grid lines and axis tick labels are still grey, you can see this changes the panel background to white.  
@@ -576,12 +580,13 @@ While we're working in `theme()`, let's make changes to the strips of the facets
 ( g1 = g1 + theme(panel.grid.major.x = element_blank(),
                   strip.background = element_blank(),
                   strip.text = element_text(hjust = 0, 
-                                            face = "bold", size = 14) ) )
+                                            face = "bold", 
+                                            size = 14) ) )
 ```
 
 #### Changing facet labels
 
-At this point I realized I'd made an error.  Changing the text in the facet strips is something that is not particularly easy, although some work can be done via the `labeller` argument.  I should have changed the levels of the variable `type` in the dataset to begin with to make them look nicer.  Let's do that now, by assigning new `levels` to the `type` variable.
+At this point I realized I'd made an error.  Changing the text in the facet strips is something that is not particularly easy, although some work can be done via the `labeller` argument in `facet_wrap()`.  I should have changed the levels of the variable `type` in the dataset to begin with to make them look nicer.  Let's do that now, by assigning new `levels` to the `type` variable.
 
 ```{r}
 # Changing the factor levels is easy
@@ -601,7 +606,7 @@ We do have another option, though, with the `%+%` function.  This function allow
 ( g1 = g1 %+% eggs2 )
 ```
 
-The last appearance change we really need is the axis labels.  We can edit the axis labels easily using `ylab` and `xlab`.  I decided to suppress the x axis label because it didn't seem necessary.  By using `NULL` instead of `""` I removed all of the space between the tick labels and the bottom of the plot.  The labels on the y axis just needed cleaning up, with capitalization and the units of measurement added.
+The last appearance change we really need is the axis labels.  Axis and other labels can be changed in `labs()`.  I decided to suppress the x axis label because it didn't seem necessary.  By using `NULL` instead of `""` I removed all of the space between the tick labels and the bottom of the plot.  The labels on the y axis needed cleaning up, with capitalization and the units of measurement added.
 
 ```{r, message = FALSE}
 ( g1 = g1 + labs(x = NULL,
@@ -626,6 +631,15 @@ library(dplyr)
                   SD = round(sd(measurement), 1) ) )
 ```
 
+To make the labels for plotting, I added the name of each statistic as well as a line break between them using `paste0()`
+
+```{r}
+sumdat = mutate(sumdat, label = paste0("Mean=", Mean, " mm", "\n", 
+                                       "SD=", SD," mm") )
+
+sumdat$label
+```
+
 You can see in the final plot that I decided to add the summary statistics beneath each boxplot.  This means we can still use `species` as the variable that defines where the text will be placed on the x axis, and `type` will define which facet it will be in.  However, we'll need to calculate a new variable to define where the text will be positioned on the y axis.  
 
 After some trial and error (which you don't get to see), I decided the minimum y value from each facet minus 0.5 would be a good place to put the text in the plot.  We can calculate this number separately for each `type` using `group_by()`/`summarise()` again.  We'll name the y position variable `yloc`.  We can then add `yloc` to `sumdat` using `inner_join()` from `dplyr` to *join* or *merge* the two datasets.
@@ -635,19 +649,10 @@ After some trial and error (which you don't get to see), I decided the minimum y
       group_by(type) %>%
       summarise(yloc = min(measurement) - .5) )
 
-( sumdat = inner_join(sumdat, loc) )
+( sumdat = inner_join(sumdat, loc, by = "type") )
 ```
-
-Now all we have left to do is to create the text labels to add to the graphic.  This involves combining all the appropriate text and values that we want to use as labels.  Here we will do that using `paste0()`.  We need the labels we are making in our dataset, which we will achieve via `mutate()` from **dplyr**.  You can see in the final graphic that I put the means and standard deviations on separate lines.  A line break in R is represented by `\n`, which we will include when making the labels.
 
 If you don't know data manipulation in R very well, this may seem like a huge amount of work in order to get what you want.  I am showing you this, though, because I wanted to drive the point home that working with a dataset outside of **ggplot2** is often required in order to take full advantage of the strengths of this package.  If you aren't comfortable with this sort of work in R then **ggplot2** likely won't be a useful tool for you for making complicated final graphics.  Another option is to add such information outside R using a different software package.
-
-```{r}
-sumdat = mutate(sumdat, label = paste0("Mean=", Mean, " mm", "\n", 
-                                       "SD=", SD," mm") )
-
-sumdat$label
-```
 
 #### Defining a new dataset for plotting for a specific layer
 
@@ -655,7 +660,7 @@ We can now add text to a graphic using `geom_text()`.  For the first time we'll 
 
 Notice we have to set the y position for `geom_text()` because we're using a different variable for `y` than we had for the rest of the graphic.  We map the y axis position to `yloc` within `aes`.  
 
-The `geom_text()` geom requires us to define a `label` variable within `aes`.  The help files for individual geoms will tell you if there are required aesthetics, which you should always check if you are using a geom for the first time.  We will map the variable `label` to the `label` aesthetic.
+The `geom_text()` geom requires us to define a `label` variable within `aes()`.  The help files for individual geoms will tell you if there are required aesthetics, which you should check for you are using a geom for the first time.  We will map the variable `label` to the `label` aesthetic.
 
 ```{r, message = FALSE, fig.height = 4}
 g1 + geom_text(data = sumdat, aes(label = label, y = yloc) )
@@ -676,12 +681,14 @@ This is what the code looks like when it is put all together instead of adding l
 	facet_wrap(~type, scales = "free_y") +
 	geom_dotplot(binaxis = "y", stackdir = "center",
 	             color = "grey64", fill = "grey64") +
-	stat_summary(fun.y = mean, geom = "point", shape = 18,
+	stat_summary(fun = mean, geom = "point", shape = 18,
 	             size = 5, color = "grey24") +
 	theme_bw(base_size = 16) + 
 	theme(panel.grid.major.x = element_blank(),
 	      strip.background = element_blank(),
-	      strip.text = element_text(hjust = 0, face = "bold", size = 13) ) +
+	      strip.text = element_text(hjust = 0, 
+	                                face = "bold", 
+	                                size = 14) ) +
  	labs(x = NULL,
  	     y = "Measurement (mm)") +
 	geom_text(data = sumdat, aes(label = label, y = yloc),
@@ -711,12 +718,14 @@ At this point I decided that the dot size was too big.  I edited the `geom_dotpl
 	facet_wrap(~type, scales = "free_y") +
 	geom_dotplot(binaxis = "y", stackdir = "center",
 	             color = "grey64", fill = "grey64", dotsize = .5) +
-	stat_summary(fun.y = mean, geom = "point", shape = 18,
+	stat_summary(fun = mean, geom = "point", shape = 18,
 	             size = 5, color = "grey24") +
 	theme_bw(base_size = 16) + 
 	theme(panel.grid.major.x = element_blank(),
 	      strip.background = element_blank(),
-	      strip.text = element_text(hjust = 0, face = "bold", size = 14) ) +
+	      strip.text = element_text(hjust = 0, 
+	                                face = "bold", 
+	                                size = 14) ) +
  	labs(x = NULL,
  	     y = "Measurement (mm)") +
 	geom_text(data = sumdat, aes(label = label, y = yloc),

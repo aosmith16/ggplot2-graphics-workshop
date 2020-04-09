@@ -459,10 +459,8 @@ head(eggs)
 	# on length and width between species
 # Making graphics of the results of two-sample t-tests is rarely
 	# useful, so we'll make a graphic displaying the observed data
-# See the final graphic I provided called "Workshop final graphic 1.pdf"
-	# This is what we are working towards
 
-# You can see we want to make a graphic that shows the 
+# We want to make a graphic that shows the 
 	# data for egg lengths and egg widths
 	# by species in separate panels
 	# This should make you think about faceting
@@ -494,8 +492,10 @@ library(tidyr)
 
 # This type of reshaping involves taking data in a *wide* format
 	# and putting it into a *long* format
-eggs2 = gather(eggs, key = type, value = measurement,
-			length, width, factor_key = TRUE)
+eggs2 = pivot_longer(eggs, cols = c(length, width),
+                     names_to = "type", 
+                     values_to = "measurement",
+                     names_ptypes = list(type = factor() ) )
 head(eggs2)
 # Take a look at the structure in the Environment pane
 
@@ -514,7 +514,7 @@ head(eggs2)
 	# see what it looks like all together rather than one line at a time
 
 # Here are the initial boxplots
-# The extra pair of parantheses prints the graphic to the plotting window
+# The extra pair of parentheses prints the graphic to the plotting window
 ( g1 = ggplot(eggs2, aes(x = species, y = measurement) ) +
  	geom_boxplot() )
 
@@ -522,7 +522,7 @@ head(eggs2)
 	# (width and length), so let's add faceting
 g1 + facet_wrap(~type)
 
-# Not suprisingly, width and length measurements 
+# Not surprisingly, width and length measurements 
 	# cover a different range of values
 # Let's allow the scale of the y axis to be 
 	# different for each panel
@@ -540,13 +540,13 @@ g1 + geom_dotplot(binaxis = "y", stackdir = "center")
 # I don't show you all the different
 	# colors I tried before finding one I liked
 	# but I mostly worked with a series of greys (grey24-grey74)
-( g1 = g1 + geom_dotplot(binaxis = "y", stackdir = "center", 
-				    color = "grey64", fill = "grey64") )
+( g1 = g1 + geom_dotplot(binaxis = "y", stackdir = "center",
+                         color = "grey64", fill = "grey64") )
 
 # Now I'll add the mean measurement of each group as a diamond, 
 	# but in a darker color grey
-( g1 = g1 + stat_summary(fun.y = mean, geom = "point", 
-				    shape = 18, size = 5, color = "grey24") )
+( g1 = g1 + stat_summary(fun = mean, geom = "point",
+                         shape = 18, size = 5, color = "grey24") )
 
 # So far this is all a review things we've already done today
 # Let's start working on the appearance of the graph a little bit more
@@ -561,7 +561,7 @@ g1 + geom_dotplot(binaxis = "y", stackdir = "center")
 	# that I often start with
 # The one I use the most is called theme black and white (theme_bw)
 # You might be interested in theme_minimal() or theme_classic(), as well
-( g1 = g1 + theme_bw() )
+g1 + theme_bw()
 
 # There are many themes out there, including a whole
     # package called ggthemes
@@ -596,7 +596,8 @@ g1 + theme(panel.grid.major.x = element_blank() )
 ( g1 = g1 + theme(panel.grid.major.x = element_blank(),
                   strip.background = element_blank(),
                   strip.text = element_text(hjust = 0,
-                                            face = "bold", size = 14) ) )
+                                            face = "bold", 
+                                            size = 14) ) )
 
 # At this point I realized I had made an error
 # While I can change a lot of things about the appearance of 
@@ -652,6 +653,20 @@ library(dplyr)
  	summarise(Mean = round(mean(measurement), 1),
  	          SD = round(sd(measurement), 1) ) )
 
+# Let's create the labels to add to the graph
+# I wanted the mean and sd on separate lines (one on top of another)
+    # "\n" indicates a line break in R, so I add that in the paste0() function
+    # along with everything else I want in the labels (values and units)
+# The paste0() function pastes values together with no separator
+
+# This is done using mutate(), also from dplyr
+sumdat = mutate(sumdat, 
+                label = paste0("Mean = ", Mean, " mm", "\n", 
+                               "SD = ", SD," mm") )
+
+# The resulting column looks like this
+sumdat$label
+
 # As you can see in the final plot, 
 	# I decided to add text under each boxplot
 # This means the x position of the text will still
@@ -672,21 +687,8 @@ library(dplyr)
 
 # To get the y position variable "yloc" into the summary dataset
 	# we can simply use inner_join() from dplyr
-( sumdat = inner_join(sumdat, loc) )
+( sumdat = inner_join(sumdat, loc, by = "type") )
 
-# Let's create the labels to add to the graph
-# I wanted the mean and sd on separate lines (one on top of another)
-	# "\n" indicates a line break in R, so I add that in the paste0() function
-	# along with everying else I want in the labels (values and units)
-# The paste0() function pastes values together with no separator
-
-# This is done using mutate(), also from dplyr
-sumdat = mutate(sumdat, 
-			  label = paste0("Mean = ", Mean, " mm", "\n", 
-			                 "SD = ", SD," mm") )
-
-# The resulting column looks like this
-sumdat$label
 
 # This is the first time we will be working with a different dataset
 	# for a geom layer (in this case, geom_text() )
@@ -720,12 +722,14 @@ g1 + geom_text(data = sumdat, aes(label = label, y = yloc) )
 		facet_wrap(~type, scales = "free_y") +
 		geom_dotplot(binaxis = "y", stackdir = "center",
 		             color = "grey64", fill = "grey64") +
-		stat_summary(fun.y = mean, geom = "point", shape = 18,
+		stat_summary(fun = mean, geom = "point", shape = 18,
 		             size = 5, color = "grey24") +
 		theme_bw(base_size = 16) +
 		theme(panel.grid.major.x = element_blank(),
 		      strip.background = element_blank(),
-		      strip.text = element_text(hjust = 0, face = "bold", size = 14) ) +
+		      strip.text = element_text(hjust = 0, 
+		                                face = "bold", 
+		                                size = 14) ) +
 		labs(x = NULL,
 		     y = "Measurement (mm)") +
 		geom_text(data = sumdat, aes(label = label, y = yloc),
@@ -762,12 +766,14 @@ ggsave("final plot 1.png", plot = g1) # using default size
 		facet_wrap(~type, scales = "free_y") +
 		geom_dotplot(binaxis = "y", stackdir = "center",
 		             color = "grey64", fill = "grey64", dotsize = .5) +
-		stat_summary(fun.y = mean, geom = "point", shape = 18,
+		stat_summary(fun = mean, geom = "point", shape = 18,
 		             size = 5, color = "grey24") +
 		theme_bw(base_size = 16) +
 		theme(panel.grid.major.x = element_blank(),
 		      strip.background = element_blank(),
-		      strip.text = element_text(hjust = 0, face = "bold", size = 14) ) +
+		      strip.text = element_text(hjust = 0, 
+		                                face = "bold", 
+		                                size = 14) ) +
         labs(x = NULL,
              y = "Measurement (mm)") +
 		geom_text(data = sumdat, aes(label = label, y = yloc),
