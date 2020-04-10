@@ -820,29 +820,27 @@ res$plantdate = factor(res$plantdate,
 				   levels = c("Jan2", "Jan28", "Feb25"),
 				   labels = c("January 2", "January 28", "February 25") )
 
-# Take a look at the plot we are working towards,
-	# called "Workshop final graphic 2"
+# We're working towards an plot with horizontal error bars
 # This is a fairly complex example because 
 	# there is only one stocktype for Jan2 but two for the other dates
 # Much of the time you will be in a simpler situation, 
-	# which means you will have less tweaks to do
+	# which means you will have fewer tweaks to do
 
 # Let's start by plotting the estimated differences in means as points
-# I will name this graphic "g2"
-	# and proceed in the same way as with "g1"
 
-( g2 = ggplot(res, aes(x = plantdate, y = Diffmeans) ) +
-        geom_point() )
+ggplot(res, aes(x = Diffmeans, y = plantdate) ) +
+    geom_point()
 
 # Now we can add error bars to represent 
 	# the confidence intervals using geom_errorbar()
 # We are required to provide the "ends" of the error bars
-	# in geom_errorbar by providing "ymax" and "ymin" positions in aes()
-# This is easy to do because we have 
-	# the upper and lower limits of the CI in the dataset
-( g2 = ggplot(res, aes(x = plantdate, y = Diffmeans) ) +
-        geom_point() +
-        geom_errorbar( aes(ymin = Lower.CI, ymax = Upper.CI) ) )
+	# in geom_errorbar() by providing "xmin" and "xmax" positions in aes()
+    # to make horizontal error bars
+# We'd use ymin and ymax if making vertical error bars
+# We use the upper and lower limits of the CI in the dataset
+ggplot(res, aes(x = Diffmeans, y = plantdate)) +
+    geom_point() +
+    geom_errorbar(aes(xmin = Lower.CI, xmax = Upper.CI))
 
 # That's not exactly what we want because 
 	# the two stock types at one date are on top of each other
@@ -854,10 +852,11 @@ res$plantdate = factor(res$plantdate,
 	# (this may take some trial and error, although .75 or  .9 are common)
 # We can only dodge horizontally, and we can set the width of the dodge
     # (how much space between groups)
-( g2 = ggplot(res, aes(x = plantdate, y = Diffmeans, group = stocktype) ) +
- 	geom_point(position = position_dodge(width = .75) ) +
- 	geom_errorbar( aes(ymin = Lower.CI, ymax = Upper.CI),
- 	               position = position_dodge(width = .75) ) )
+ggplot(res, aes(x = Diffmeans, y = plantdate, 
+                group = stocktype) ) +
+    geom_point(position = position_dodge(width = .75) ) +
+    geom_errorbar( aes(xmin = Lower.CI, xmax = Upper.CI),
+                   position = position_dodge(width = .75) )
 
 # That's better, but still not very pretty
 # There is a problem with the width of the error bars
@@ -865,50 +864,39 @@ res$plantdate = factor(res$plantdate,
 # There is only 1 group level instead of 2,
 	# which causes the width of the error bar 
 	# to be twice as wide as the others
-# I can set widths in geom_errobar outside the aes() 
+# I can set widths in geom_errorbar() outside the aes() 
 	# by defining widths for each comparison, 
 	# with the first set as half the width of others
 # In a simpler situation I would set a single width for every error bar
-( g2 = ggplot(res, aes(x = plantdate, y = Diffmeans, group = stocktype) ) +
- 	geom_point(position = position_dodge(width = .75) ) +
- 	geom_errorbar( aes(ymin = Lower.CI, ymax = Upper.CI),
- 	               position = position_dodge(width = .75),
- 	               width = c(.2, .4, .4, .4, .4) ) )
+ggplot(res, aes(x = Diffmeans, y = plantdate, 
+                group = stocktype) ) +
+    geom_point(position = position_dodge(width = .75) ) +
+    geom_errorbar( aes(xmin = Lower.CI, xmax = Upper.CI),
+                   position = position_dodge(width = .75),
+                   width = c(.2, .4, .4, .4, .4) )
 
 # That looks much better
-# But look what happens when we try set the geom_errorbar aesthetic 
-	# linetype to "stocktype"
-# (I believe this has been fixed in the development version
-    # of ggplot2, so versions after 2.2.1
-    # can likely avoid this step)
-( g2 = ggplot(res, aes(x = plantdate, y = Diffmeans, group = stocktype) ) +
+
+# However, we can't tell which line is for which stocktype
+# We can get a legend by mapping "linetype" to stocktype
+( g2 = ggplot(res, aes(x = Diffmeans, y = plantdate,
+                       group = stocktype) ) +
         geom_point(position = position_dodge(width = .75) ) +
-        geom_errorbar( aes(ymin = Lower.CI, ymax = Upper.CI,
+        geom_errorbar( aes(xmin = Lower.CI, xmax = Upper.CI,
                            linetype = stocktype),
                        position = position_dodge(width = .75),
                        width = c(.2, .4, .4, .4, .4) ) )
 
-# The error message is somewhat useful here, 
-	# because it tells me that something is wrong with the aesthetics
-	# and in particular with width
-# We are in the quite unusual situation where 
-	# we actually need to set the widths inside aes()
-	# instead of outside 
-( g2 = ggplot(res, aes(x = plantdate, y = Diffmeans, group = stocktype) ) +
-        geom_point(position = position_dodge(width = .75) ) +
-        geom_errorbar( aes(ymin = Lower.CI, ymax = Upper.CI,
-                           linetype = stocktype,
-                           width = c(.2, .4, .4, .4, .4) ),
-                       position = position_dodge(width = .75) ) )
+# Since we're ready to start changing the plot appearance,
+    # I'll name the plot and start adding to it
+    # one layer at a time
 
-# Now we have the initial graphic to build on
-	# so let's do some work on the panel and axis appearance
 # First, let's change the theme to theme_bw()
     # with a larger base_size
 	# and make the axis labels look nicer
 ( g2 = g2 + theme_bw(base_size = 16) + 
-		labs(x = "Planting Date",
-		     y = "Difference in Growth (cm)") )
+		labs(x = "Difference in Growth (cm)",
+		     y = "Planting Date") )
 
 # It can be informative to show the area that indicates
 	# a practically unimportant difference
@@ -919,28 +907,29 @@ res$plantdate = factor(res$plantdate,
 # Instead we're going to draw a see-through grey rectangle 
 	# over the area between -.25 and .25 
 	# to indicate the "Zone of no difference"
-# In geom_rect() we are required to define 
-	# the boundaries of the rectangle with xmax, xmin, ymax, ymin
-# We'll use Inf/-Inf for the x axis to make the rectange
+# This is done with the rectangle geom "rect" in annotate() 
+# The boundaries of the rectangle are set 
+    # with xmax, xmin, ymax, ymin
+# We'll use Inf/-Inf for the y axis to make the rectangle
     # all the way across the plot
-( g2 = g2 + geom_rect(xmin = -Inf, xmax = Inf, ymin = -.25, ymax = .25,
-                      fill = "grey54", alpha = .05) )
+( g2 = g2 + annotate(geom = "rect",
+                     xmin = -.25, xmax = .25,
+                     ymin = -Inf, ymax = Inf,
+                     fill = "grey54", alpha = .25) )
 
-# If .25 is a practical difference, we may want more
+# If 0.25 is a practical difference, we may want more
 	# "breaks" or tick marks on the y axis so we can see the .25 clearly
-# We do this with the appropriate scale function, scale_y_continuous
-# If we were changing the x axis we would use scale_x_discrete
-	# because x is a categorical variable in this plot
-( g2 = g2 + scale_y_continuous(breaks = seq(-1.5, .5, by = .25) ) )
+# We do this with the appropriate scale function, scale_x_continuous()
+# If we were changing the y axis we would use scale_y_discrete()
+	# because y is a categorical variable in this plot
+( g2 = g2 + scale_x_continuous(breaks = seq(-1.5, .5, by = .25) ) )
 
-# I could have built this entire graphic with planting date on the y axis
-	# and growth on the x axis in 
-	# conjunction with geom_errorbarh() (horizontal error bars)
-	# but I wanted to show you how coord_flip works
-# Let's flip the axes here
-( g2 = g2 + coord_flip() )
-
-# Now I can do some of the final appearance changes
+# The y axis is discrete, and by default
+    # the levels go from bottom to top
+# I'd like the dates to go from top to bottom, instead,
+    # with January 2 at the top
+# This can be done with scale_y_discrete()
+( g2 = g2 + scale_y_discrete(limits = rev) )
 
 # I don't like the default dotted linetype 
 	# and the names of the stock categories should be clearer
@@ -956,7 +945,7 @@ res$plantdate = factor(res$plantdate,
 	# in scale_linetype_manual(), as well
 
 g2 + scale_linetype_manual(values = c("solid", "twodash"),
-                           name = element_blank(),
+                           name = NULL,
                            labels = c("Bare root", "Container") )
 
 # It would also be nice to have the lines in the legend
@@ -965,17 +954,13 @@ g2 + scale_linetype_manual(values = c("solid", "twodash"),
 	# and guide_legend() function
 # There are a ton of things we can control in guide_legend(), much like with theme()
 ( g2 = g2 + scale_linetype_manual(values = c("solid", "twodash"),
-                                  name = element_blank(),
+                                  name = NULL,
                                   labels = c("Bare root", "Container"),
                                   guide = guide_legend(reverse = TRUE) ) )
 
 # We have plenty of space to put the legend within the graphic
 # This is something we can adjust in theme()
-# Consider adding tables of summary stats 
-	# in a graphic with this much white space
-	# which you could with ggplot2 combined with package gridExtra
 
-# I also want the legend laid out horizontally instead of vertically
 # The legend position coordinates are essentially 
 	# between 0 and 1 in both x and y 
 	# within the plotting area
@@ -983,49 +968,62 @@ g2 + scale_linetype_manual(values = c("solid", "twodash"),
 	# a perfect placement
 # While we're using theme(), let's get rid of the y axis gridlines
     # and the minor x axis gridlines
-( g2 = g2 + theme(legend.position = c(.25, .1),
-                  legend.direction = "horizontal",
+g2 + theme(legend.position = c(.2, .75),
+           panel.grid.major.y = element_blank(),
+           panel.grid.minor.y = element_blank(),
+           panel.grid.minor.x = element_blank() )
+
+# Then I decided to tweak the space around the legend,
+    # leading me to spend some time figuring out the
+    # legend margins and
+    # legend spacing, https://github.com/tidyverse/ggplot2/issues/3587
+( g2 = g2 + theme(legend.position = c(.2, .75),
+                  legend.spacing.y = unit(0, "pt"),
+                  legend.margin = margin(t = 4, r = 5, b = 5, l = 5),
                   panel.grid.major.y = element_blank(),
                   panel.grid.minor.y = element_blank(),
                   panel.grid.minor.x = element_blank() ) )
 
-# Last, let's add a label to indicate that the grey rectangle 
+# Finally, let's add a label to indicate that the grey rectangle 
 	# is the "zone of no difference"
 # annotate() is the function to use when adding a single label like this 
 	# instead of geom_text() to add many labels from a dataset
 # Placement is a hard decision here
 	# I decided to put it near the bottom of the rectangle on the left
-# Remember that we flipped the coordinates, so x is y and y is x!
-( g2 = g2 + annotate(geom = "text", x = .5, y = 0,
+( g2 = g2 + annotate(geom = "text", x = 0, y = 0.5,
                      label = "Zone of no difference", size = 3) )
 
 # Here's what the ggplot code looks like if we built it all together
-( g2 = ggplot(res, aes(x = plantdate, y = Diffmeans, group = stocktype) ) +
+( g2 = ggplot(res, aes(x = Diffmeans, y = plantdate,
+                       group = stocktype) ) +
         geom_point(position = position_dodge(width = .75) ) +
-        geom_errorbar( aes(ymax = Upper.CI, ymin = Lower.CI,
-                           linetype = stocktype,
-                           width = c(.2, .4, .4, .4, .4) ),
-                       position = position_dodge(width = .75) ) +
-        theme_bw() +
-        labs(x = "Planting Date",
-             y = "Difference in Growth (cm)") +
-        geom_rect(xmin = -Inf, xmax = Inf, ymin = -.25, ymax = .25,
-                  fill = "grey54", alpha = .05) +
-        scale_y_continuous(breaks = seq(-1.5, .5, by = .25) ) +
-        coord_flip() +
+        geom_errorbar( aes(xmin = Lower.CI, xmax = Upper.CI,
+                           linetype = stocktype),
+                       position = position_dodge(width = .75),
+                       width = c(.2, .4, .4, .4, .4) ) +
+        theme_bw(base_size = 16) +
+        labs(x = "Difference in Growth (cm)",
+             y = "Planting Date") +
+        annotate(geom = "rect",
+                 xmin = -.25, xmax = .25,
+                 ymin = -Inf, ymax = Inf,
+                 fill = "grey54", alpha = .25) +
+        scale_x_continuous(breaks = seq(-1.5, .5, by = .25) ) +
+        scale_y_discrete(limits = rev) +
         scale_linetype_manual(values = c("solid", "twodash"),
-                              name = element_blank(),
+                              name = NULL,
                               labels = c("Bare root", "Container"),
                               guide = guide_legend(reverse = TRUE) ) +
-        theme(legend.position = c(.25, .1),
-              legend.direction = "horizontal",
+        theme(legend.position = c(.2, .75),
+              legend.spacing.y = unit(0, "pt"),
+              legend.margin = margin(t = 4, r = 5, b = 5, l = 5),
               panel.grid.major.y = element_blank(),
               panel.grid.minor.y = element_blank(),
               panel.grid.minor.x = element_blank() ) +
-        annotate(geom = "text", x = .5, y = 0,
+        annotate(geom = "text", x = 0, y = 0.5,
                  label = "Zone of no difference", size = 3) )
 
 # This now matches the final graphic, and we could save it as before
-ggsave("final plot 2.pdf", width = 8, height = 7)
+ggsave("final plot 2.pdf", plot = g2, width = 7, height = 6)
 
 # end of workshop ----
