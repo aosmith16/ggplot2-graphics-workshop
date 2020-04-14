@@ -1,27 +1,28 @@
 ---
-title: "Reshaping data"
+title: "Polishing a results plot"
 output: 
   learnr::tutorial:
        progressive: TRUE
        allow_skip: TRUE
        ace_theme: "crimson_editor"
 runtime: shiny_prerendered
-description: "Using tidyr to reshape your data."
+description: "A second example of controlling plot appearance, including using some new geoms."
 ---
 
 ```{r setup, include = FALSE}
 library(learnr)
 library(ggplot2)
-library(tidyr)
-library(dplyr)
-knitr::opts_chunk$set(error = TRUE)
+knitr::opts_chunk$set(error = TRUE, exercise.eval = FALSE)
+
 ```
+
+## Introduction
 
 ```{r hex, echo = FALSE, out.width = "100px"}
 knitr::include_graphics(path = "https://raw.githubusercontent.com/rstudio/hex-stickers/master/PNG/ggplot2.png")
 ```
 
-This is the final tutorial in a series of three.  Like the second tutorial, it will walk you through another example of making a "final" graphic in **ggplot2**. This example will cover some topics not covered yet, such as adding error bars and annotating the plot with rectangles and text.  Since this example involves a legend, you will also get to see examples of moving and controlling legend appearance.
+This is the final tutorial in a series of three.  As in the second tutorial, it goes through an example of making a "final" graphic in **ggplot2**. This example will cover some new topics, such as adding error bars and annotating the plot with rectangles and text.  Since this example involves a legend, you will also get to see code controlling legend appearance and placement.
 
 I'm not advocating this as any sort of ideal final graphic, as a lot of plotting depends on personal preference and, potentially, manuscript requirements.  Instead, this example of the plotting process is done to expose you to more **ggplot2** options.
 
@@ -45,7 +46,7 @@ library(ggplot2)
 
 ### The plotting dataset
 
-The dataset to be plotted is called `res`, containing the estimated differences in mean growth of each group against the control group based on an analysis of mean growth vs two factors.  I pulled the estimated differences in means and the associated confidence intervals from the statistical model and saved the results.
+The dataset to be plotted is called `res`.  It contains the estimated differences in mean growth of each group compared to the control group from an analysis of growth vs two factors.  I pulled the estimated differences in means and the associated confidence intervals from the statistical model and saved the results.
 
 ```{r res}
 res = structure(list(Diffmeans = c(-0.27, 0.11, -0.15, -1.27, -1.18
@@ -61,9 +62,11 @@ res = structure(list(Diffmeans = c(-0.27, 0.11, -0.15, -1.27, -1.18
 
 ###
 
-Take a quick look at the first six lines (with `head()`) and structure (with `str()`) of this dataset so you understand what it looks like.  The two factors used in the original analyses are `plantdate`, which has three levels that indicate the date that trees were planted, and `stocktype`, which has two levels and indicates the kind of stock (either bare root or in a container).  The control group was bare root trees planted on January 2.  There were six groups including the control group, and so there are five comparisons in this table of results. 
+Take a quick look at the first six lines (with `head()`) and structure (with `str()`) of this dataset so you understand what it looks like.  
 
-The goal will be to make a plot with estimated means and confidence intervals as error bars to display these results.
+The two factors used in the original analyses are `plantdate`, which has three levels that indicate the date that trees were planted, and `stocktype`, which has two levels and indicates the kind of stock used (either bare root or in a container).  The control group was bare root trees planted on January 2.  There were six groups including the control group in the analysis, and so there are five comparisons in this table of results. 
+
+The goal is to make a plot showing these estimated differences in means and confidence intervals as error bars.
 
 ```{r head-res, exercise = TRUE}
 head(res)
@@ -75,10 +78,436 @@ str(res)
 
 ### Factor order controls axis order
 
-After going through the previous tutorials, you now know that it is often easiest to clean up the dataset prior to making the plot.  Along those lines, I'll start by making some changes to the `plantdate` variable.  The levels of `plantdate` aren't in date order because R by default orders levels of factors alphanumerically.  I can control the display order of a factor in **ggplot2** by changing the order of the factor levels in the dataset.  I also relabel the levels of the factor to make them look nicer to save myself some work later.
+You know from going through the previous tutorials that one way to impact the plot is to work on the dataset.  Along those lines, I'll start by making some changes to the `plantdate` variable.  
 
-```{r factor}
+The levels of `plantdate` aren't in date order because R by default orders levels of factors alphanumerically.  I can control the display order of a factor in **ggplot2** by changing the order of the factor levels in the dataset.  I also relabel the levels of the factor to make them look nicer in the plot via `labels`.  This saves me some work once I start plotting.
+
+```{r factor, exercise = TRUE}
 res$plantdate = factor(res$plantdate, 
 				   levels = c("Jan2", "Jan28", "Feb25"),
 				   labels = c("January 2", "January 28", "February 25") )
 ```
+
+```{r factor-setup, echo = FALSE}
+res$plantdate = factor(res$plantdate, 
+				   levels = c("Jan2", "Jan28", "Feb25"),
+				   labels = c("January 2", "January 28", "February 25") )
+```
+
+## Initial horizontal scatterplot
+
+I decided I wanted a scatterplot with horizontal error bars, so I start by making a plot with the continuous variable `Diffmeans` on the x axis and `plantdate` on the y.  Make note that there are two dots for some of the dates because there are estimates for the two stock types.
+
+Like in the second tutorial, these plots are printed at 6.5 inches wide and 4 inches tall.
+
+```{r initplot, exercise = TRUE, exercise.setup = "factor-setup"}
+ggplot(res, aes(x = Diffmeans, y = plantdate) ) +
+    geom_point()
+```
+
+## Adding horizontal error bars
+
+Error bars can be added to a plot with `geom_errorbar()`.  For horizontal error bars you need map the aesthetics `xmin` and `xmax` to variables that represent the *ends* of the error bars within `aes()`.  I added the upper and lower confidence limits to the dataset for this purpose.
+
+If you were making vertical error bars you'd use `ymin` and `ymax`. These (`xmin`/`xmax` or `ymin`/`ymax`) are required aesthetics in `geom_errorbar()`.  Being able to make horizontal error bars directly like this was introduced in **ggplot2** version 3.3.0.  If your version of the package is older then this code won't work.
+
+```{r plot2, exercise = TRUE, exercise.setup = "factor-setup"}
+ggplot(res, aes(x = Diffmeans, y = plantdate) ) +
+    geom_point() +
+    geom_errorbar( aes(xmin = Lower.CI, xmax = Upper.CI) )
+```
+
+###
+
+### Avoid overlap with dodging
+
+Since there are two different stock types at a single planting date, the error bars overlap and the plot is difficult to understand.  To avoid this, I will use what is called *dodging*.  In order to *dodge* the overlapping points apart, I need to have a variable that identifies the multiple values at each planting date are from separate groups.  In this case that variable is `stocktype`.
+
+A common issue when trying to dodge overlapping geoms apart is failing to define the variable to dodge on.
+
+###
+
+I map the `group` aesthetic in the global `aes()` to `stocktype`.  I put this in `ggplot()` so it affects all layers.  
+
+In addition to adding `group` globally I add a `position` argument *outside* `aes()` in each of the layers I want to dodge.  In this case that's both the points and error bars.  I choose the amount I want to dodge points apart by in `position_dodge()` with the `width` argument.  Note I have to dodge both the points and the error bars, and that I do it by the same `width` amount so the layers stay lined up.  Common dodging amounts are 0.9 and 0.75.
+
+I added a lot at once here to get the dodging to work, so the code looks quite a bit more complicated now.
+
+```{r plot3, exercise = TRUE, exercise.setup = "factor-setup"}
+ggplot(res, aes(x = Diffmeans, y = plantdate, 
+                group = stocktype) ) +
+    geom_point(position = position_dodge(width = 0.75) ) +
+    geom_errorbar( aes(xmin = Lower.CI, xmax = Upper.CI),
+                   position = position_dodge(width = 0.75) )
+```
+
+The stock types no longer overlap, but what's going on with the width of the error bars for January 2?
+
+### Control error bar width
+
+It turns out that the width of the error bar is twice as big for the single stock type on January 2 as it is when there are two stock types on the other dates.  This can be controlled by using the `width` argument in `geom_errorbar()`.  This complication is due to my choice to plot dates with varying numbers of stock types; a different plot would have been simpler.  For example, I could have put date-stock combinations on the y axis to avoid this.  
+
+Usually when you set `width` you'll set it to a single value, and all the widths would be changed the same way.  It turns out here I need to set the `width` of the first error bar to *half* the value of the others.  This means I have to set `width` to a vector defining the width for all five error bars.  Order matters; the first value is the one for January 2 because that's the first point that gets plotted.
+
+Since I'm setting `width` to constants, this is done outside `aes()`.  I picked width values using trial and error.  Don't be surprised if you don't get widths you like on your first try.  
+
+```{r plot4, exercise = TRUE, exercise.setup = "factor-setup"}
+ggplot(res, aes(x = Diffmeans, y = plantdate, 
+                group = stocktype) ) +
+    geom_point(position = position_dodge(width = 0.75) ) +
+    geom_errorbar( aes(xmin = Lower.CI, xmax = Upper.CI),
+                   position = position_dodge(width = 0.75),
+                   width = c(.2, .4, .4, .4, .4) )
+```
+
+## Adding a legend
+
+In the plot so far you can't tell which line is for which stock type.  To get a legend on a plot you to map an aesthetic to a variable.  I decided to map `linetype` to `stocktype` within `geom_errorbar()` so the two groups have different types of lines.  This is aesthetic mapping, so goes inside `aes()`.
+
+```{r linetype, exercise = TRUE, exercise.setup = "factor-setup"}
+( g2 = ggplot(res, aes(x = Diffmeans, y = plantdate,
+                       group = stocktype) ) +
+      geom_point(position = position_dodge(width = 0.75) ) +
+      geom_errorbar( aes(xmin = Lower.CI, xmax = Upper.CI,
+                         linetype = stocktype),
+                     position = position_dodge(width = 0.75),
+                     width = c(.2, .4, .4, .4, .4) ) )
+```
+
+This is the basic plot to build on, so I name it `g2`.  Throughout the rest of the tutorial I'll add layers one at a time to control the plot appearance.  
+
+## Changing theme and axes
+
+I start changing the appearance by setting the overall theme to `theme_bw()`, changing the base text size, and cleaning up the axis labels.  This is all a repeat of the process used in the second tutorial.
+
+```{r plot6-setup, echo = FALSE}
+res$plantdate = factor(res$plantdate, 
+				   levels = c("Jan2", "Jan28", "Feb25"),
+				   labels = c("January 2", "January 28", "February 25") )
+g2 = ggplot(res, aes(x = Diffmeans, y = plantdate,
+                       group = stocktype) ) +
+      geom_point(position = position_dodge(width = .75) ) +
+      geom_errorbar( aes(xmin = Lower.CI, xmax = Upper.CI,
+                         linetype = stocktype),
+                     position = position_dodge(width = .75),
+                     width = c(.2, .4, .4, .4, .4) )
+```
+
+```{r plot6, exercise = TRUE, exercise.setup = "plot6-setup"}
+( g2 = g2 + 
+      theme_bw(base_size = 16) + 
+      labs(x = "Difference in Growth (cm)",
+           y = "Planting Date") )
+```
+
+## Adding a shaded rectangle
+
+It can be informative to give some indication of what a practical difference would be.  In this case, a difference in mean growth of more than 0.25 cm compared to the control would be practically meaningful to growers.  In the past I've indicated the practically important limits using horizontal lines with `geom_hline()`.  Today I'll add a shaded rectangle to indicate this "Zone of no difference" using the `rect` geom.
+
+If you want to add many rectangles based on a dataset you'll likely use `geom_rect()`.  However, if you want to add a [single rectangle with transparency](https://stackoverflow.com/questions/17521438/geom-rect-and-alpha-does-this-work-with-hard-coded-values) like I'm doing today you'll find `annotate()` useful.  In `annotate()` you need to define which geom you are using; in this case, `"rect"`.
+
+###
+
+###
+
+When making rectangles you need to define where the *edges* of the rectangle should be drawn.  Since these aesthetics are set to constants this is done outside `aes()`.  For the x axis I use -0.25 and 0.25 for `xmin` and `xmax`, respectively.  Because I want the rectangle to go all the way across the y axis I use `-Inf`/`Inf` for `ymin` and `ymax`.  
+
+I also set `alpha` to a value below 1 to make the rectangle see-through and set the fill color to some gray shade with `fill`.  
+
+```{r plot7-setup, echo = FALSE}
+res$plantdate = factor(res$plantdate, 
+				   levels = c("Jan2", "Jan28", "Feb25"),
+				   labels = c("January 2", "January 28", "February 25") )
+g2 = ggplot(res, aes(x = Diffmeans, y = plantdate,
+                       group = stocktype) ) +
+      geom_point(position = position_dodge(width = .75) ) +
+      geom_errorbar( aes(xmin = Lower.CI, xmax = Upper.CI,
+                         linetype = stocktype),
+                     position = position_dodge(width = .75),
+                     width = c(.2, .4, .4, .4, .4) ) + 
+      theme_bw(base_size = 16) + 
+      labs(x = "Difference in Growth (cm)",
+           y = "Planting Date")
+```
+
+```{r plot7, exercise = TRUE, exercise.setup = "plot7-setup"}
+( g2 = g2 + 
+      annotate(geom = "rect",
+               xmin = -0.25, xmax = 0.25,
+               ymin = -Inf, ymax = Inf,
+               fill = "grey54", alpha = 0.25) )
+```
+
+## Changing the axes
+
+I wanted to make a few changes to the axes, which is done using the appropriate *scale* function.  Which scale function you use depends on whether the axis is categorical (aka *discrete*) or continuous.
+
+###
+
+### Changing the x axis breaks
+
+If 0.25 cm is the practically important difference I should show finer tick marks or *breaks* on the x axis.  Right now the breaks are set at every 0.5 cm.  Since the x axis is continuous I'll use `scale_x_continuous()` with the `breaks` argument.  
+
+I make axis breaks every 0.25 cm instead of 0.5 cm using a sequence of numbers from the -1.5 to 0.5 in 0.25 increments (see `?seq` for more info).
+
+The result looks a little busy when printed here in this tutorial, but I'm not quite to the final plot yet and this will look better in the end when the plotting size is a little larger.
+
+```{r plot8-setup, echo = FALSE}
+res$plantdate = factor(res$plantdate, 
+				   levels = c("Jan2", "Jan28", "Feb25"),
+				   labels = c("January 2", "January 28", "February 25") )
+g2 = ggplot(res, aes(x = Diffmeans, y = plantdate,
+                       group = stocktype) ) +
+    geom_point(position = position_dodge(width = .75) ) +
+    geom_errorbar( aes(xmin = Lower.CI, xmax = Upper.CI,
+                       linetype = stocktype),
+                   position = position_dodge(width = .75),
+                   width = c(.2, .4, .4, .4, .4) ) +
+    theme_bw(base_size = 16) +
+    labs(x = "Difference in Growth (cm)",
+         y = "Planting Date") +
+    annotate(geom = "rect",
+             xmin = -.25, xmax = .25,
+             ymin = -Inf, ymax = Inf,
+             fill = "grey54", alpha = .25)
+```
+
+```{r plot8, exercise = TRUE, exercise.setup = "plot8-setup"}
+( g2 = g2 + 
+      scale_x_continuous(breaks = seq(-1.5, 0.5, by = 0.25) ) )
+```
+
+### Reversing the y axis
+
+The y axis is a *discrete* axis.  By default the factor levels on a discrete axis are listed bottom to top.  I'll change these so they go top to bottom; i.e., January 2 should be listed at the top.
+
+This can be done in `scale_y_discrete()` using the `limits` argument.  Limits can be reversed with `rev`.
+
+```{r plot9-setup, echo = FALSE}
+res$plantdate = factor(res$plantdate, 
+				   levels = c("Jan2", "Jan28", "Feb25"),
+				   labels = c("January 2", "January 28", "February 25") )
+g2 = ggplot(res, aes(x = Diffmeans, y = plantdate,
+                       group = stocktype) ) +
+    geom_point(position = position_dodge(width = .75) ) +
+    geom_errorbar( aes(xmin = Lower.CI, xmax = Upper.CI,
+                       linetype = stocktype),
+                   position = position_dodge(width = .75),
+                   width = c(.2, .4, .4, .4, .4) ) +
+    theme_bw(base_size = 16) +
+    labs(x = "Difference in Growth (cm)",
+         y = "Planting Date") +
+    annotate(geom = "rect",
+             xmin = -.25, xmax = .25,
+             ymin = -Inf, ymax = Inf,
+             fill = "grey54", alpha = .25) +
+    scale_x_continuous(breaks = seq(-1.5, .5, by = .25) )
+```
+
+```{r plot9, exercise = TRUE, exercise.setup = "plot9-setup"}
+( g2 = g2 + 
+      scale_y_discrete(limits = rev) )
+```
+
+## Changing the legend
+
+There are a few final appearance changes I want to make.  
+
+First, I didn't like the dotted line I got by default.  You can change the type of lines in the plot and legend with the function `scale_linetype_manual()`.  Most aesthetics have a scale function that you can use to change the default aesthetic settings (you saw `color` and `fill` scales in the first tutorial).  
+
+I set the `values` of the line types in `scale_linetype_manual()`.  You can see the different' types of lines available [here](https://ggplot2.tidyverse.org/reference/aes_linetype_size_shape.html).  I also changed the title and the labels of the groups that are displayed in the legend via `name` and `labels`, respectively.  The `names` were removed all together.
+
+```{r plot10-setup, echo = FALSE}
+res$plantdate = factor(res$plantdate, 
+				   levels = c("Jan2", "Jan28", "Feb25"),
+				   labels = c("January 2", "January 28", "February 25") )
+g2 = ggplot(res, aes(x = Diffmeans, y = plantdate,
+                       group = stocktype) ) +
+    geom_point(position = position_dodge(width = .75) ) +
+    geom_errorbar( aes(xmin = Lower.CI, xmax = Upper.CI,
+                       linetype = stocktype),
+                   position = position_dodge(width = .75),
+                   width = c(.2, .4, .4, .4, .4) ) +
+    theme_bw(base_size = 16) +
+    labs(x = "Difference in Growth (cm)",
+         y = "Planting Date") +
+    annotate(geom = "rect",
+             xmin = -.25, xmax = .25,
+             ymin = -Inf, ymax = Inf,
+             fill = "grey54", alpha = 0.25) +
+    scale_x_continuous(breaks = seq(-1.5, 0.5, by = 0.25) ) + 
+    scale_y_discrete(limits = rev)
+```
+
+```{r plot10, exercise = TRUE, exercise.setup = "plot10-setup"}
+g2 + 
+    scale_linetype_manual(values = c("solid", "twodash"),
+                           name = NULL,
+                           labels = c("Bare root", "Container") )
+```
+
+### 
+
+### Reversing the legend
+
+It seems more aesthetically pleasing to me if the line order in the legend matches the order that the lines show up in the plot.  In this case the dashed line/`Container` group comes first in the plot.  This can be controlled in `scale_linetype_manual()` as well, using the `guide` argument with `guide_legend()`. I use `reverse` to to reverse the order of the legend.  The `guide_legend()` function allows you to control many aspects of the legend.
+
+```{r plot11, exercise = TRUE, exercise.setup = "plot10-setup"}
+( g2 = g2 + 
+      scale_linetype_manual(values = c("solid", "twodash"),
+                            name = NULL,
+                            labels = c("Bare root", "Container"),
+                            guide = guide_legend(reverse = TRUE) ) )
+```
+
+### Moving the legend
+
+There is plenty of blank space within the plot to fit the legend so I decided to move the legend inside the plot panel.  This can be done in `theme()`.   
+
+I used `legend.position` to move the legend.  The legend position here is based on coordinates between 0 and 1 on each axis, and took trial and error to get a nice placement.  You can also use options such as, e.g., `"bottom"` in `legend.position` to leave the legend outside the plot panel but move it to a different side of the plot.  See the help page for `theme()` for more options.
+
+While I was in `theme()`, I decided to remove the y axis grid lines all together along with the minor x axis gridlines. You saw gridline control in the second tutorial.
+
+```{r plot12-setup, echo = FALSE}
+res$plantdate = factor(res$plantdate, 
+				   levels = c("Jan2", "Jan28", "Feb25"),
+				   labels = c("January 2", "January 28", "February 25") )
+g2 = ggplot(res, aes(x = Diffmeans, y = plantdate,
+                       group = stocktype) ) +
+    geom_point(position = position_dodge(width = 0.75) ) +
+    geom_errorbar( aes(xmin = Lower.CI, xmax = Upper.CI,
+                       linetype = stocktype),
+                   position = position_dodge(width = 0.75),
+                   width = c(.2, .4, .4, .4, .4) ) +
+    theme_bw(base_size = 16) +
+    labs(x = "Difference in Growth (cm)",
+         y = "Planting Date") +
+    annotate(geom = "rect",
+             xmin = -0.25, xmax = 0.25,
+             ymin = -Inf, ymax = Inf,
+             fill = "grey54", alpha = 0.25) +
+    scale_x_continuous(breaks = seq(-1.5, 0.5, by = 0.25) ) + 
+    scale_y_discrete(limits = rev) +
+    scale_linetype_manual(values = c("solid", "twodash"),
+                          name = NULL,
+                          labels = c("Bare root", "Container"),
+                          guide = guide_legend(reverse = TRUE) )
+```
+
+```{r plot12, exercise = TRUE, exercise.setup = "plot12-setup"}
+g2 + theme(legend.position = c(0.2, 0.75),
+           panel.grid.major.y = element_blank(),
+           panel.grid.minor.y = element_blank(),
+           panel.grid.minor.x = element_blank() )
+```
+
+###
+
+Once I moved the legend inside the plot I thought the space around the legend could use a couple more tweaks.  This took me down a rabbit hole figuring out how to change the margins (with `legend.margin`) and fix the spacing above the legend.  I ended up using `legend.spacing.y` after reading [this GitHub issue](https://github.com/tidyverse/ggplot2/issues/3587).
+
+As you can see, there are a *lot* of things you can change in `theme()`.
+
+```{r plot13, exercise = TRUE, exercise.setup = "plot12-setup"}
+( g2 = g2 + 
+      theme(legend.position = c(0.2, 0.75),
+            legend.spacing.y = unit(0, "pt"),
+            legend.margin = margin(t = 4, r = 5, b = 5, l = 5),
+            panel.grid.major.y = element_blank(),
+            panel.grid.minor.y = element_blank(),
+            panel.grid.minor.x = element_blank() ) )
+```
+
+## Adding a text label
+
+The last thing I wanted to do is add the label to the "Zone of no difference" rectangle.  Unlike adding multiple labels all positioned separately by group like in tutorial 2, I want to add a single label.  This is a clue that I should add the text using `annotate()` instead of `geom_text()`.  I used `annotate()` earlier to add a single rectangle.  This works in a similar way, but now I use `"text"` as the geom.
+
+In addition to placing the label (listed in `label`), I also shrunk the size of the text to make it fit inside the rectangle once the plot is at its final size.  Because I am setting all aesthetics to constants, they are outside `aes()`.  The `x` and `y` aesthetics control text placement and are based on the values on each axis.
+
+```{r plot14-setup, echo = FALSE}
+res$plantdate = factor(res$plantdate, 
+				   levels = c("Jan2", "Jan28", "Feb25"),
+				   labels = c("January 2", "January 28", "February 25") )
+g2 = ggplot(res, aes(x = Diffmeans, y = plantdate,
+                       group = stocktype) ) +
+    geom_point(position = position_dodge(width = .75) ) +
+    geom_errorbar( aes(xmin = Lower.CI, xmax = Upper.CI,
+                       linetype = stocktype),
+                   position = position_dodge(width = .75),
+                   width = c(.2, .4, .4, .4, .4) ) +
+    theme_bw(base_size = 16) +
+    labs(x = "Difference in Growth (cm)",
+         y = "Planting Date") +
+    annotate(geom = "rect",
+             xmin = -.25, xmax = .25,
+             ymin = -Inf, ymax = Inf,
+             fill = "grey54", alpha = .25) +
+    scale_x_continuous(breaks = seq(-1.5, .5, by = .25) ) + 
+    scale_y_discrete(limits = rev) +
+    scale_linetype_manual(values = c("solid", "twodash"),
+                          name = NULL,
+                          labels = c("Bare root", "Container"),
+                          guide = guide_legend(reverse = TRUE) ) + 
+    theme(legend.position = c(.2, .75),
+          legend.spacing.y = unit(0, "pt"),
+          legend.margin = margin(t = 4, r = 5, b = 5, l = 5),
+          panel.grid.major.y = element_blank(),
+          panel.grid.minor.y = element_blank(),
+          panel.grid.minor.x = element_blank() )
+```
+
+```{r plot14, exercise = TRUE, exercise.setup = "plot14-setup"}
+( g2 = g2 + 
+      annotate(geom = "text", x = 0, y = 0.5,
+               label = "Zone of no difference", size = 3) )
+```
+
+## Final graphic
+
+And there you have it, the final graphic.  Here's what the code looks like all together.  It's long!
+
+The graphic below is displayed at 7 x 6 inches, the size at which I saved the final graphic.
+
+```{r final, fig.width = 7, fig.height = 6, exercise = TRUE, exercise.setup = "factor-setup"}
+( g2 = ggplot(res, aes(x = Diffmeans, y = plantdate,
+                       group = stocktype) ) +
+      geom_point(position = position_dodge(width = 0.75) ) +
+      geom_errorbar( aes(xmin = Lower.CI, xmax = Upper.CI,
+                         linetype = stocktype),
+                     position = position_dodge(width = 0.75),
+                     width = c(.2, .4, .4, .4, .4) ) +
+      theme_bw(base_size = 16) +
+      labs(x = "Difference in Growth (cm)",
+           y = "Planting Date") +
+      annotate(geom = "rect",
+               xmin = -0.25, xmax = 0.25,
+               ymin = -Inf, ymax = Inf,
+               fill = "grey54", alpha = 0.25) +
+      scale_x_continuous(breaks = seq(-1.5, 0.5, by = 0.25) ) +
+      scale_y_discrete(limits = rev) +
+      scale_linetype_manual(values = c("solid", "twodash"),
+                            name = NULL,
+                            labels = c("Bare root", "Container"),
+                            guide = guide_legend(reverse = TRUE) ) +
+      theme(legend.position = c(0.2, 0.75),
+            legend.spacing.y = unit(0, "pt"),
+            legend.margin = margin(t = 4, r = 5, b = 5, l = 5),
+            panel.grid.major.y = element_blank(),
+            panel.grid.minor.y = element_blank(),
+            panel.grid.minor.x = element_blank() ) +
+      annotate(geom = "text", x = 0, y = 0.5,
+               label = "Zone of no difference", size = 3) )
+```
+
+###
+
+###
+
+You would save this graphic in the same way as in tutorial 2 with `ggsave()`.  This code is not run.
+
+```{r save, eval = FALSE}
+ggsave("final plot 2.pdf", plot = g2, width = 7, height = 6)
+```
+
+###
+
+This ends this tutorial and so the workshop.  There is much more that you can do in **ggplot2** that this workshop didn't cover.  However, this should give you a starting point for making your own graphics with **ggplot2** in R.  Plot away!

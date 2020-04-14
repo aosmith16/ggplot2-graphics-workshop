@@ -814,7 +814,7 @@ res$plantdate = factor(res$plantdate,
 
 This example turns out to be more complex than I was originally planning on because of the odd number of comparisons.  Two of the plant dates have comparisons between both stock types and the control but January 2 only has one stock type comparison.  However, I decided to stick with the complex graphic so you can see the kinds of problems you have might run into as your graphic complexity increases.
 
-We'll start by plotting the estimated differences in means as points with `plantdate` on the y axis since we want horizontal error bars.  We'll start by working on getting the geom layers added.
+We'll start by plotting the estimated differences in means as points with `plantdate` on the y axis since we want horizontal error bars.  
 
 ```{r}
 ggplot(res, aes(x = Diffmeans, y = plantdate) ) +
@@ -823,7 +823,7 @@ ggplot(res, aes(x = Diffmeans, y = plantdate) ) +
 
 #### Adding error bars to a plot
 
-We can add the 95% confidence intervals around the estimated means as error bars with `geom_errorbar()`.  Since we want horizontal error bars, we map the aesthetics `xmin` and `xmax` to variables that represent the *ends* of the error bars.  I added the upper and lower confidence limits to the dataset for this purpose.
+We can add the 95% confidence intervals around the estimated means as error bars with `geom_errorbar()`.  Since we want horizontal error bars, we map the aesthetics `xmin` and `xmax` to variables that represent the *ends* of the error bars within `aes()`.  I added the upper and lower confidence limits to the dataset for this purpose.
 
 If we were making vertical error bars we'd use `ymin` and `ymax`. These (`xmin`/`xmax` or `ymin`/`ymax`) are required aesthetics in `geom_errorbar()`.  
 
@@ -837,18 +837,18 @@ ggplot(res, aes(x = Diffmeans, y = plantdate) ) +
 
 #### Dodging to avoid overlap
 
-When we have two different stock types at a single planting date, the error bars overlap and the graphic is difficult to understand.  To avoid this, we will do what is called *dodging*.  In order to *dodge* the overlapping points, we need to define which variable tells us that we have two values at a single planting date.  In this case that variable is `stocktype`, so we map the `group` aesthetic in `aes()` to `stocktype`. A common issue when trying to dodge overlapping geoms apart is failing to make a variable to *dodge* on. 
+When we have two different stock types at a single planting date, the error bars overlap and the graphic is difficult to understand.  To avoid this, we will do what is called *dodging*.  In order to *dodge* the overlapping points, we need to define which variable identifies that we have two values for two groups at a single planting date.  In this case that variable is `stocktype`, so we map the `group` aesthetic in `aes()` to `stocktype`. A common issue when trying to dodge overlapping geoms apart is failing to make a variable to *dodge* on. 
 
-We want to dodge whenever we get an overlap along the x axis, so in addition to adding `group` we need to choose the amount we want to dodge by in `position_dodge()`.  This is done with `width`.  
+We want to dodge whenever we get an overlap along the x axis, so in addition to adding `group` we need to use the `position` argument.  This is done *outside* `aes()` in each layer.  We choose the amount we want to dodge by in `position_dodge()` with the `width` argument.  
 
 Notice we have to dodge both the points and the error bars, and that we do it by the same `width` amount so they stay lined up.  Common dodging amounts are 0.9 and 0.75.
 
 ```{r}
 ggplot(res, aes(x = Diffmeans, y = plantdate, 
                 group = stocktype) ) +
-    geom_point(position = position_dodge(width = .75) ) +
+    geom_point(position = position_dodge(width = 0.75) ) +
     geom_errorbar( aes(xmin = Lower.CI, xmax = Upper.CI),
-                   position = position_dodge(width = .75) )
+                   position = position_dodge(width = 0.75) )
 ```
 
 #### Setting the `width` of error bars for unbalanced factors
@@ -862,9 +862,9 @@ I picked widths using trial and error.  Don't be surprised if you don't get widt
 ```{r, message = FALSE}
 ggplot(res, aes(x = Diffmeans, y = plantdate, 
                 group = stocktype) ) +
-    geom_point(position = position_dodge(width = .75) ) +
+    geom_point(position = position_dodge(width = 0.75) ) +
     geom_errorbar( aes(xmin = Lower.CI, xmax = Upper.CI),
-                   position = position_dodge(width = .75),
+                   position = position_dodge(width = 0.75),
                    width = c(.2, .4, .4, .4, .4) )
 ```
 
@@ -877,14 +877,14 @@ This is the basic plot we'll build on, so we'll assign it a name.
 ```{r linetype}
 ( g2 = ggplot(res, aes(x = Diffmeans, y = plantdate,
                        group = stocktype) ) +
-      geom_point(position = position_dodge(width = .75) ) +
+      geom_point(position = position_dodge(width = 0.75) ) +
       geom_errorbar( aes(xmin = Lower.CI, xmax = Upper.CI,
                          linetype = stocktype),
-                     position = position_dodge(width = .75),
+                     position = position_dodge(width = 0.75),
                      width = c(.2, .4, .4, .4, .4) ) )
 ```
 
-#### Changing appearance
+#### Changing appearance with overall theme
 
 Now that we have the basic graphic built, let's start polishing it up by setting the theme to `theme_bw()`, change the base text size, and clean up the axis labels.  This was all done in the previous example.
 
@@ -897,29 +897,29 @@ Now that we have the basic graphic built, let's start polishing it up by setting
 
 #### Adding a shaded rectangle
 
-It can be informative to give some indication of what a practical difference would be on the graphic.  In this case, a difference in mean growth of 0.25 cm more or less compared to the control would be practically meaningful to growers.  In the past I've indicated the practically important limits using horizontal lines with `geom_hline()`.  Today we'll add a shaded rectangle to indicate this "Zone of no difference" using the `rect` geom.
+It can be informative to give some indication of what a practical difference would be on the graphic.  In this case, a difference in mean growth of 0.25 cm compared to the control would be practically meaningful to growers.  In the past I've indicated the practically important limits using horizontal lines with `geom_hline()`.  Today we'll add a shaded rectangle to indicate this "Zone of no difference" using the `rect` geom.
 
-If you want to add many rectangles based on a dataset you'll likely use `geom_rect()`.  However, if you want to add a [single rectangle with transparency](https://stackoverflow.com/questions/17521438/geom-rect-and-alpha-does-this-work-with-hard-coded-values) like we'll do today you'll find this is easiest using `annotate()`.  In `annotate()` we need to define which geom we are using; in this case, `"rect"`.
+If you want to add many rectangles based on a dataset you'll likely use `geom_rect()`.  However, if you want to add a [single rectangle with transparency](https://stackoverflow.com/questions/17521438/geom-rect-and-alpha-does-this-work-with-hard-coded-values) like we'll do today you'll often use `annotate()`.  In `annotate()` we need to define which geom we are using; in this case, `"rect"`.
 
-When making rectangles we need to define where the *edges* of the rectangle should be drawn.  Since these aesthetics are set to constants this is done outside `aes()`.  Because we want the rectangle to go all the way across the y axis we use `Inf`/`-Inf` for `ymin` and `ymax`.  We'll also set `alpha` to make the rectangle see-through and set the fill color to some gray shade with `fill`.  
+When making rectangles we need to define where the *edges* of the rectangle should be drawn.  Since these aesthetics are set to constants this is done outside `aes()`.  The x axis values are set to the practically important difference (-0.25, 0.25).  Because we want the rectangle to go all the way across the y axis we use `-Inf`/`Inf` for `ymin` and `ymax`.  We'll also set `alpha` to make the rectangle see-through and set the fill color to some gray shade with `fill`.  
 
 ```{r}
 ( g2 = g2 + annotate(geom = "rect",
-                     xmin = -.25, xmax = .25,
+                     xmin = -0.25, xmax = 0.25,
                      ymin = -Inf, ymax = Inf,
-                     fill = "grey54", alpha = .25) )
+                     fill = "grey54", alpha = 0.25) )
 ```
 
 #### Changing the x axis breaks
 
-If 0.25 cm is the practically important difference, we may want to show finer tick marks or *breaks* on the y axis.  Notice that right now the breaks are set for every 0.5 cm change.  We can control axes with the appropriate scale functions.  In this case, the x axis is continuous and we'll use `scale_x_continuous()`.  
+If 0.25 cm is the practically important difference, we may want to show finer tick marks or *breaks* on the x axis.  Notice that right now the breaks are set for every 0.5 cm change.  We can control axes with the appropriate scale functions.  In this case, the x axis is continuous and we'll use `scale_x_continuous()`.  
 
-We'll make axis breaks every 0.25 cm instead of 0.5 cm using a sequence of numbers from the -1.5 to 0.5 by 0.25 increments (see `?seq` for more info).
+We'll make axis breaks every 0.25 cm instead of 0.5 cm using a sequence of numbers from the -1.5 to 0.5 in 0.25 increments (see `?seq` for more info).
 
 The result looks a little busy when printed here in this document, but we're not quite to the final plot yet and this will look better in the end.
 
 ```{r, message = FALSE}
-( g2 = g2 + scale_x_continuous(breaks = seq(-1.5, .5, by = .25) ) )
+( g2 = g2 + scale_x_continuous(breaks = seq(-1.5, 0.5, by = 0.25) ) )
 ```
 
 #### Reversing the y axis
@@ -936,7 +936,7 @@ This can be done in `scale_y_discrete()` using the `limits` argument.  We revers
 
 There are a few final appearance changes we need to make on this graphic.  First, I didn't like the dotted `linetype` that we got by default.  We can change the type of lines we get in the plot and legend with the function `scale_linetype_manual()`.  Most aesthetics have a scale function that you can use to change the default aesthetic settings (we saw `color` and `fill` scales earlier in the workshop).  
 
-We'll set the `values` of the line types in `scale_linetype_manual()`.  We'll also change the title and the labels of the groups that are displayed in the legend with this function, as well, via `name` and `labels`, respectively.  We remove the `names` all together.
+We'll set the `values` of the line types in `scale_linetype_manual()`; you can see the different types of lines available [here](https://ggplot2.tidyverse.org/reference/aes_linetype_size_shape.html).  We'll also change the title and the labels of the groups that are displayed in the legend with this function, as well, via `name` and `labels`, respectively.  We remove the `names` all together.
 
 ```{r, message = FALSE}
 g2 + scale_linetype_manual(values = c("solid", "twodash"),
@@ -944,7 +944,7 @@ g2 + scale_linetype_manual(values = c("solid", "twodash"),
                            labels = c("Bare root", "Container") )
 ```
 
-It seems more aesthetically pleasing to have the order that the lines show in the legend match the order that the lines show up in the graphic.  In this case the dashed line/`Container` group comes first in the plot.  We can control this inside `scale_linetype_manual()` as well, using the `guide` argument with `guide_legend()`. We set `reverse` to `TRUE` to reverse the order of the legend.  The `guide_legend()` function allows us to control many aspects of the legend.
+It seems more aesthetically pleasing to have the order of the lines in the legend match the order that the lines show up in the plot.  In this case the dashed line/`Container` group comes first in the plot.  We can control this inside `scale_linetype_manual()` as well, using the `guide` argument with `guide_legend()`. We set `reverse` to `TRUE` to reverse the order of the legend.  The `guide_legend()` function allows us to control many aspects of the legend.
 
 ```{r, message = FALSE}
 ( g2 = g2 + scale_linetype_manual(values = c("solid", "twodash"), 
@@ -964,7 +964,7 @@ I'll keep the legend vertical but if we wanted to make it horizontal we would do
 I decided to remove the y axis grid lines all together along with the minor x axis gridlines, which is also done in `theme()`. 
 
 ```{r}
-g2 + theme(legend.position = c(.2, .75),
+g2 + theme(legend.position = c(0.2, 0.75),
            panel.grid.major.y = element_blank(),
            panel.grid.minor.y = element_blank(),
            panel.grid.minor.x = element_blank() )
@@ -975,7 +975,7 @@ Once I moved the legend inside the plot I thought the space around the legend co
 As you can see, there are a *lot* of things you can change in `theme()`.
 
 ```{r}
-( g2 = g2 + theme(legend.position = c(.2, .75),
+( g2 = g2 + theme(legend.position = c(0.2, 0.75),
                   legend.spacing.y = unit(0, "pt"),
                   legend.margin = margin(t = 4, r = 5, b = 5, l = 5),
                   panel.grid.major.y = element_blank(),
@@ -999,25 +999,25 @@ And there we have it, the final graphic.  Here's what the code looks like all to
 ```{r, fig.width = 7, fig.height = 6}
 ( g2 = ggplot(res, aes(x = Diffmeans, y = plantdate,
                        group = stocktype) ) +
-      geom_point(position = position_dodge(width = .75) ) +
+      geom_point(position = position_dodge(width = 0.75) ) +
       geom_errorbar( aes(xmin = Lower.CI, xmax = Upper.CI,
                          linetype = stocktype),
-                     position = position_dodge(width = .75),
+                     position = position_dodge(width = 0.75),
                      width = c(.2, .4, .4, .4, .4) ) +
       theme_bw(base_size = 16) +
       labs(x = "Difference in Growth (cm)",
            y = "Planting Date") +
       annotate(geom = "rect",
-               xmin = -.25, xmax = .25,
+               xmin = -0.25, xmax = 0.25,
                ymin = -Inf, ymax = Inf,
-               fill = "grey54", alpha = .25) +
-      scale_x_continuous(breaks = seq(-1.5, .5, by = .25) ) +
+               fill = "grey54", alpha = 0.25) +
+      scale_x_continuous(breaks = seq(-1.5, 0.5, by = 0.25) ) +
       scale_y_discrete(limits = rev) +
       scale_linetype_manual(values = c("solid", "twodash"),
                             name = NULL,
                             labels = c("Bare root", "Container"),
                             guide = guide_legend(reverse = TRUE) ) +
-      theme(legend.position = c(.2, .75),
+      theme(legend.position = c(0.2, 0.75),
             legend.spacing.y = unit(0, "pt"),
             legend.margin = margin(t = 4, r = 5, b = 5, l = 5),
             panel.grid.major.y = element_blank(),
