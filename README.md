@@ -7,3 +7,5 @@ The first half of the workshop focuses on learning the syntax and terminology us
 In the second half of the workshop we focus on controlling the overall appearance of a graphic when making “publication-ready” plots.  We'll go through the code to create two fairly complicated graphics, building each one layer by layer so students can see how the plot changes with each addition.  Students will also see some data manipulation to *reshape* a dataset prior to plotting, which is often necessary when plotting data with **ggplot2**.   
 
 I provide an R script that we'll run code from during the workshop as well as a PDF document.  The PDF is a written version of the workshop, including code and output, to be used as a reference.
+
+The workshop material is also available as a series of three interactive tutorials using package **learnr**.  You can see instructions for how to download and run those [here](https://ariel.rbind.io/workshop/ggplot2/#interactive-tutorials).
